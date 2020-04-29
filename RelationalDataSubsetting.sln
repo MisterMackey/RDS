@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RelationalDataSubsetting", "RelationalDataSubsetting\RelationalDataSubsetting.csproj", "{2A980224-C04D-4556-9F95-E85E14BE8E7E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RelationalSubsettingLib", "RelationalSubsettingLib\RelationalSubsettingLib.csproj", "{A96FE262-ABD0-478D-BD73-64F56918C19A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A980224-C04D-4556-9F95-E85E14BE8E7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A980224-C04D-4556-9F95-E85E14BE8E7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A980224-C04D-4556-9F95-E85E14BE8E7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A980224-C04D-4556-9F95-E85E14BE8E7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A96FE262-ABD0-478D-BD73-64F56918C19A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A96FE262-ABD0-478D-BD73-64F56918C19A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A96FE262-ABD0-478D-BD73-64F56918C19A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A96FE262-ABD0-478D-BD73-64F56918C19A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D02CB597-4904-45BA-8173-F1444965EEA6}
+	EndGlobalSection
+EndGlobal
