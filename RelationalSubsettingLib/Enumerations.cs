@@ -14,6 +14,8 @@ namespace RelationalSubsettingLib
         SetBase,
         Help,
         SetDelimiter,
-        d
+        d,
+        a,
+        All
     }
 }
