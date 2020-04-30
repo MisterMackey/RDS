@@ -6,6 +6,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -181,9 +182,14 @@ namespace RelationalSubsettingLib.Subsetting
 
         private DataTable RetrieveUniqueColumnValues(DataTable baseFileTable, string col)
         {
-            DataTable uniques;
-            var view = new DataView(baseFileTable);
-            uniques = view.ToTable("uniques", true, new string[] {  col});
+            DataTable uniques = new DataTable("uniques");
+            var uniquerows = (from rows in baseFileTable.AsEnumerable()
+                              select rows[col]).Distinct();
+            uniques.Columns.Add(col);
+            foreach(var r in uniquerows)
+            {
+                uniques.Rows.Add(r);
+            }
             int numUniques = uniques.Rows.Count;
             Console.Out.WriteLine($"{numUniques} unique values found");
             return uniques;
