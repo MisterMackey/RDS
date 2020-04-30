@@ -10,10 +10,10 @@ namespace RelationalSubsettingLib.Functions
 {
     public class Subset
     {
-        private Dictionary<string, Action<string[]>> optionMapping;
+        private Dictionary<string, Action<string[]>> ModeMapping;
         public Subset()
         {
-            optionMapping = new Dictionary<string, Action<string[]>>()
+            ModeMapping = new Dictionary<string, Action<string[]>>()
             {
                 {"-CREATE",  Create},
                 {"-FACTOR", Factor },
@@ -32,9 +32,9 @@ namespace RelationalSubsettingLib.Functions
                 return;
             }
             string mode = args[1].ToUpper();
-            if (optionMapping.ContainsKey(mode))
+            if (ModeMapping.ContainsKey(mode))
             {
-                optionMapping[mode](args);
+                ModeMapping[mode](args);
             }
             else
             {

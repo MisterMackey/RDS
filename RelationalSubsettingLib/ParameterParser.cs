@@ -15,18 +15,19 @@ namespace RelationalSubsettingLib
         public ParameterParser()
         {
             ParameterMapping = new Dictionary<string, Action<string[]>>()
-        {
-            {"HELP", paramHELP }
-            ,{"DEBUG_CURRENTDIRECTORY", paramDEBUG_CURRENTDIR}
-            ,{"INIT", paramINIT}
-            ,{"CLEAN", paramCLEAN}
-            ,{"LIST", paramLIST}
-            ,{"STATUS", paramSTATUS}
-            ,{"RELATE", paramRELATE}
-            ,{"DEBUG_DUMPFILEINFO", paramDEBUG_DUMPFILEINFO}
-            ,{"DEBUG_DUMPRELATIONINFO", paramDEBUG_DUMPRELATIONINFO}
-            ,{"SUBSET", paramSUBSET}
-        };
+            {
+                {"HELP", paramHELP }
+                ,{"DEBUG_CURRENTDIRECTORY", paramDEBUG_CURRENTDIR}
+                ,{"INIT", paramINIT}
+                ,{"CLEAN", paramCLEAN}
+                ,{"LIST", paramLIST}
+                ,{"STATUS", paramSTATUS}
+                ,{"RELATE", paramRELATE}
+                ,{"DEBUG_DUMPFILEINFO", paramDEBUG_DUMPFILEINFO}
+                ,{"DEBUG_DUMPRELATIONINFO", paramDEBUG_DUMPRELATIONINFO}
+                ,{"SUBSET", paramSUBSET}
+                ,{"FILE", paramFILE}
+            };
         }
 
 
@@ -129,6 +130,15 @@ namespace RelationalSubsettingLib
         {
             Subset s = new Subset();
             s.Run(obj);
+        }
+
+        [RequiresInitializedRepository(),
+            ValidOptions(CommandOptions.d),
+            ValidOptions(CommandOptions.SetDelimiter)]
+        private void paramFILE(string[] obj)
+        {
+            RdsFile rdsFile = new RdsFile();
+            rdsFile.Run(obj);
         }
 
         #endregion

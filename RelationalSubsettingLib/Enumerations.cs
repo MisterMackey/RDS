@@ -12,6 +12,8 @@ namespace RelationalSubsettingLib
         Delete,
         Factor,
         SetBase,
-        Help
+        Help,
+        SetDelimiter,
+        d
     }
 }
