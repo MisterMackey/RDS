@@ -9,7 +9,7 @@ using System.Text;
 /// </summary>
 namespace RelationalSubsettingLib
 {
-    public class DataFileInfo
+    public class DataFileInfo : DataSourceInformation
     {
         public FileInfo Info;
         public string[] Columns;

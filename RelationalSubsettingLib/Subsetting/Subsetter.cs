@@ -77,41 +77,93 @@ namespace RelationalSubsettingLib.Subsetting
             else
             {
                 Console.Out.WriteLine("Loading related files");
-                _SubsetRelatedFiles(BaseFileSubset, related, datafileinfos);
+                bool recurse = true;
+                _SubsetRelatedFiles(BaseFileSubset, related, datafileinfos, recurse, m_Options.BaseFileName);
             }
         }
 
-        private void _SubsetRelatedFiles(DataTable baseFileSubset, List<KeyRelationship> relations, List<DataFileInfo> dfInfos)
+        private void _SubsetRelatedFiles(DataTable baseFileSubset, List<KeyRelationship> relations, List<DataFileInfo> dfInfos, bool Recurse, string baseFileName)
         {
             foreach(var rel in relations)
             {
                 //set basefile column name (used in the 'exists' clause) to the column that is from the basefile, whether its primary of foreign
-                bool IsPrimaryColumnInBaseFile = rel.Primary.FileName.Equals(m_Options.BaseFileName);
-                string basefileColumnName = IsPrimaryColumnInBaseFile ? rel.Primary.Column : rel.Foreign.Column;
+                bool IsPrimaryColumnInBaseFile = rel.Primary.FileName.Equals(baseFileName);
+                string PrimaryFileColumnName = IsPrimaryColumnInBaseFile ? rel.Primary.Column : rel.Foreign.Column;
                 //same but reverse
-                string otherfileColumnName = IsPrimaryColumnInBaseFile ? rel.Foreign.Column : rel.Primary.Column;
+                string RelatedFileColumnName = IsPrimaryColumnInBaseFile ? rel.Foreign.Column : rel.Primary.Column;
                 //datafileinfo for related file
                 string otherfileFileName = IsPrimaryColumnInBaseFile ? rel.Foreign.FileName : rel.Primary.FileName;
                 var otherFileDataFileInfo = dfInfos.
                     Where(x => x.Info.Name.Equals(otherfileFileName)).FirstOrDefault();
-                DataTable dt = new DataTable(otherfileFileName);
+                DataTable RelatedDataTable = new DataTable(otherfileFileName);
                 Console.Out.WriteLine($"Loading {otherfileFileName}");
-                LoadFileToDataTable(dt, otherFileDataFileInfo);
+                LoadFileToDataTable(RelatedDataTable, otherFileDataFileInfo);
                 //select where exists, linq optimizer do ur magic :S
                 //actually lets optimize this so we definitely don't enumerate the inner query hundreds of times
                 List<string> validList = (from baseData in baseFileSubset.AsEnumerable()
-                                          select (string)baseData[basefileColumnName]
+                                          select (string)baseData[PrimaryFileColumnName]
                                 ).ToList();
-                IEnumerable<DataRow> rowsIWant = from otherData in dt.AsEnumerable()
+                IEnumerable<DataRow> ValidRowsFromSource = from otherData in RelatedDataTable.AsEnumerable()
                                 where validList.
-                                    Any(x => x.Equals((string)otherData[otherfileColumnName]))
+                                    Any(x => x.Equals((string)otherData[RelatedFileColumnName]))
                                 select otherData;
-                _CreateSubsetFile(rowsIWant, otherFileDataFileInfo, dt.Columns);
+                _CreateSubsetFile(ValidRowsFromSource, otherFileDataFileInfo, RelatedDataTable.Columns);
                 Console.Out.WriteLine($"{otherfileFileName}: subset created");
+                if (Recurse)
+                {
+                    //repeat this stuff for the relations of this file we just made
+                    List<KeyRelationship> recursiveRelations = RetrieveKeyRelationships();
+                    //excluding relations that point back to the file we just came from in the previous recursion step
+                    var related = recursiveRelations.
+                        Where(x => (x.Primary.FileName.Equals(otherfileFileName) && !x.Foreign.FileName.Equals(baseFileName)) 
+                        || (x.Foreign.FileName.Equals(otherfileFileName) && !x.Primary.FileName.Equals(baseFileName)) ).
+                        ToList();
+                    _SubsetRelatedFiles(ValidRowsFromSource, related, dfInfos, true, otherfileFileName);
+                }
+            }
+        }
+        private void _SubsetRelatedFiles(IEnumerable<DataRow> baseFileSubset, List<KeyRelationship> relations, List<DataFileInfo> dfInfos, bool Recurse, string baseFileName)
+        {
+            foreach (var rel in relations)
+            {
+                //set basefile column name (used in the 'exists' clause) to the column that is from the basefile, whether its primary of foreign
+                bool IsPrimaryColumnInBaseFile = rel.Primary.FileName.Equals(baseFileName);
+                string PrimaryFileColumnName = IsPrimaryColumnInBaseFile ? rel.Primary.Column : rel.Foreign.Column;
+                //same but reverse
+                string RelatedFileColumnName = IsPrimaryColumnInBaseFile ? rel.Foreign.Column : rel.Primary.Column;
+                //datafileinfo for related file
+                string otherfileFileName = IsPrimaryColumnInBaseFile ? rel.Foreign.FileName : rel.Primary.FileName;
+                var otherFileDataFileInfo = dfInfos.
+                    Where(x => x.Info.Name.Equals(otherfileFileName)).FirstOrDefault();
+                DataTable RelatedDataTable = new DataTable(otherfileFileName);
+                Console.Out.WriteLine($"Loading {otherfileFileName}");
+                LoadFileToDataTable(RelatedDataTable, otherFileDataFileInfo);
+                //select where exists, linq optimizer do ur magic :S
+                //actually lets optimize this so we definitely don't enumerate the inner query hundreds of times
+                List<string> validList = (from baseData in baseFileSubset
+                                          select (string)baseData[PrimaryFileColumnName]
+                                ).ToList();
+                IEnumerable<DataRow> rowsIWant = from otherData in RelatedDataTable.AsEnumerable()
+                                                 where validList.
+                                                     Any(x => x.Equals((string)otherData[RelatedFileColumnName]))
+                                                 select otherData;
+                _CreateSubsetFile(rowsIWant, otherFileDataFileInfo, RelatedDataTable.Columns);
+                Console.Out.WriteLine($"{otherfileFileName}: subset created");
+                if (Recurse)
+                {
+                    //repeat this stuff for the relations of this file we just made
+                    List<KeyRelationship> recursiveRelations = RetrieveKeyRelationships();
+                    //excluding relations that point back to the file we just came from in the previous recursion step
+                    var related = recursiveRelations.
+                        Where(x => (x.Primary.FileName.Equals(otherfileFileName) && !x.Foreign.FileName.Equals(baseFileName))
+                        || (x.Foreign.FileName.Equals(otherfileFileName) && !x.Primary.FileName.Equals(baseFileName))).
+                        ToList();
+                    _SubsetRelatedFiles(RelatedDataTable, related, dfInfos, true, otherfileFileName);
+                }
             }
         }
 
-        private List<KeyRelationship> RetrieveKeyRelationships()
+            private List<KeyRelationship> RetrieveKeyRelationships()
         {
             DirectoryInfo rdsinfo = new DirectoryInfo($"{Environment.CurrentDirectory}\\.rds");
             var info = rdsinfo.EnumerateFiles("*.rdskrf").
