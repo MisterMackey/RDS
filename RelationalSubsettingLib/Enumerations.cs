@@ -16,6 +16,8 @@ namespace RelationalSubsettingLib
         SetDelimiter,
         d,
         a,
-        All
+        All,
+        AddFile,
+        AddTable
     }
 }

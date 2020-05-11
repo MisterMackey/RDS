@@ -136,7 +136,9 @@ namespace RelationalSubsettingLib
             ValidOptions(CommandOptions.d),
             ValidOptions(CommandOptions.SetDelimiter),
             ValidOptions(CommandOptions.a),
-            ValidOptions(CommandOptions.All)]
+            ValidOptions(CommandOptions.All),
+            ValidOptions(CommandOptions.AddFile),
+            ValidOptions(CommandOptions.AddTable)]
         private void paramFILE(string[] obj)
         {
             RdsFile rdsFile = new RdsFile();

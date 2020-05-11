@@ -21,10 +21,11 @@ namespace RelationalSubsettingLib.Functions
             ModeMapping = new Dictionary<string, Action<string[]>>()
             {
                 {"-d", modeSetDelimiter },
-                {"-SetDelimiter", modeSetDelimiter }
+                {"-SETDELIMITER", modeSetDelimiter },
+                {"-ADDFILE", modeAddFile },
+                {"-ADDTABLE", modeAddTable }
             };
         }
-
 
 
         public void Run(string[] args)
@@ -34,7 +35,7 @@ namespace RelationalSubsettingLib.Functions
                 Console.Error.WriteLine("The File command requires a mode. Use -help for usage");
                 return;
             }
-            string mode = args[1];
+            string mode = args[1].ToUpper();
             ModeMapping[mode](args);
         }
 
@@ -45,6 +46,7 @@ namespace RelationalSubsettingLib.Functions
             if (obj.Length != 4)
             {
                 Console.Error.WriteLine("Correct usage: rds File -d {filenameRegex | -a} {delim}");
+                return;
             }
             string regex;
             if (obj[2] == "-a" || obj[2] == "All")
@@ -69,6 +71,37 @@ namespace RelationalSubsettingLib.Functions
                 ReDetermineColumns(f);
                 Save(f);
             }
+        }
+
+        private void modeAddTable(string[] obj)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void modeAddFile(string[] obj)
+        {
+            //correct use: rds File -AddFile {filepath} [delim]
+            if (obj.Length < 3 || obj.Length > 4)
+            {
+                Console.Error.WriteLine("Correct usage: rds File -AddFile {filePath} [delimiter]");
+                return;
+            }
+            string path = obj[2];
+            if (!File.Exists(path))
+            {
+                Console.Error.WriteLine($"Could not find file {path}");
+                return;
+            }
+            FileInfo inf = new FileInfo(path);
+            DataFileInfo DFInfo = new DataFileInfo(inf);
+            if (obj.Length == 4)
+            {
+                DFInfo.Delimiter = obj[3];
+                ReDetermineColumns(DFInfo);
+            }
+            Save(DFInfo);
+            Console.Out.WriteLine($"Added file {path}.\r\nDelimiter: {DFInfo.Delimiter}");
+
         }
 
         private void Save(DataFileInfo f)
