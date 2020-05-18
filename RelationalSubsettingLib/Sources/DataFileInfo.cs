@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 /// <summary>
@@ -11,6 +12,7 @@ namespace RelationalSubsettingLib
 {
     public class DataFileInfo : DataSourceInformation
     {
+        public override string ConcreteType => "DataFileInfo";
         public FileInfo Info;
         public string[] Columns;
         public string Delimiter;
