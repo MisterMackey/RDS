@@ -165,9 +165,7 @@ namespace RelationalSubsettingLib.Subsetting
 
             private List<KeyRelationship> RetrieveKeyRelationships()
         {
-            DirectoryInfo rdsinfo = new DirectoryInfo($"{Environment.CurrentDirectory}\\.rds");
-            var info = rdsinfo.EnumerateFiles("*.rdskrf").
-                FirstOrDefault();
+            var info = new FileInfo($"{Environment.CurrentDirectory}\\{Properties.Settings.RdsDirectoryName}\\{Properties.Settings.KeyRelationshipFileName}");
             return new List<KeyRelationship>().LoadFromFile(info.FullName);
         }
 
@@ -276,7 +274,8 @@ namespace RelationalSubsettingLib.Subsetting
 
         private static List<DataFileInfo> RetrieveDataFileInfoList()
         {
-            DirectoryInfo rdsinfo = new DirectoryInfo($"{Environment.CurrentDirectory}\\.rds");
+            string rdsDir = Properties.Settings.RdsDirectoryName;
+            DirectoryInfo rdsinfo = new DirectoryInfo($"{Environment.CurrentDirectory}\\{rdsDir}");
             string ext = Properties.Settings.DataSourceFileExtension;
             List<DataFileInfo> datafileinfos = rdsinfo.EnumerateFiles().
                 Where(x => x.Extension.Equals(ext)).

@@ -45,7 +45,9 @@ namespace RelationalSubsettingLib.Functions
         private void Create(string[] options)
         {
             string path;
-            FileInfo settingsFile = new FileInfo($"{Environment.CurrentDirectory}\\.rds\\settings.rdssf");
+            string settingsFileName = Properties.Settings.RdsSubsettingSettingsFileName;
+            string rdsDir = Properties.Settings.RdsDirectoryName;
+            FileInfo settingsFile = new FileInfo($"{Environment.CurrentDirectory}\\{rdsDir}\\{settingsFileName}");
             SubsettingOptions ssOptions = new SubsettingOptions().LoadFromFile(settingsFile.FullName);
             if (options.Length > 3) //wut?
             {
@@ -70,7 +72,9 @@ namespace RelationalSubsettingLib.Functions
 
         private void Setbase(string[] obj)
         {
-            FileInfo settingsFile = new FileInfo($"{Environment.CurrentDirectory}\\.rds\\settings.rdssf");
+            string settingsFileName = Properties.Settings.RdsSubsettingSettingsFileName;
+            string rdsDir = Properties.Settings.RdsDirectoryName;
+            FileInfo settingsFile = new FileInfo($"{Environment.CurrentDirectory}\\{rdsDir}\\{settingsFileName}");
             SubsettingOptions options = new SubsettingOptions().LoadFromFile(settingsFile.FullName);
             if (obj.Length != 4)//usage: subset setbase file column
             {
@@ -94,7 +98,8 @@ namespace RelationalSubsettingLib.Functions
         private bool IsValidInputForSetbase(string file, string column)
         {
             string ext = Properties.Settings.DataSourceFileExtension;
-            DirectoryInfo rdsdir = new DirectoryInfo($"{Environment.CurrentDirectory}\\.rds");
+            string rdsDir = Properties.Settings.RdsDirectoryName;
+            DirectoryInfo rdsdir = new DirectoryInfo($"{Environment.CurrentDirectory}\\{rdsDir}");
             var datafileinfo = rdsdir.EnumerateFiles(). //all files
                 Where(x => x.Extension.Equals(ext)). //with rds datafileinfo extension
                 Select(x => new DataFileInfo().LoadFromFile(x.FullName)). //select the datafileinfo objects that are loaded from those files
@@ -117,7 +122,9 @@ namespace RelationalSubsettingLib.Functions
 
         private void Factor(string[] obj)
         {
-            FileInfo settingsFile = new FileInfo($"{Environment.CurrentDirectory}\\.rds\\settings.rdssf");
+            string settingsFileName = Properties.Settings.RdsSubsettingSettingsFileName;
+            string rdsDir = Properties.Settings.RdsDirectoryName;
+            FileInfo settingsFile = new FileInfo($"{Environment.CurrentDirectory}\\{rdsDir}\\{settingsFileName}");
             SubsettingOptions options = new SubsettingOptions().LoadFromFile(settingsFile.FullName);
             if (obj.Length != 3) //subset factor double
             {

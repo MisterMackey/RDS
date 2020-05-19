@@ -16,15 +16,18 @@ namespace RelationalSubsettingLib.Functions
                 ".txt"
                 ,".csv"
             };
+            string ext = Properties.Settings.DataSourceFileExtension;
+            string settingsFileName = Properties.Settings.RdsSubsettingSettingsFileName;
+            string keyrelationFileName = Properties.Settings.KeyRelationshipFileName;
+            string rdsDir = Properties.Settings.RdsDirectoryName;
             string dir = Environment.CurrentDirectory;
             Console.Out.WriteLine($"Initializing in {dir}");
             DirectoryInfo directoryInfo = new DirectoryInfo(dir);
-            var settingsdir = directoryInfo.CreateSubdirectory(".\\.rds");
+            var settingsdir = directoryInfo.CreateSubdirectory($".\\{rdsDir}");
             settingsdir.Attributes = settingsdir.Attributes | FileAttributes.Hidden; //set folder to hidden
             var files = directoryInfo.EnumerateFiles().
                 Where(leFile => leFile.Extension.InList(extensionWhiteList)).
                 ToList();
-            string ext = Properties.Settings.DataSourceFileExtension;
             foreach (var f in files)
             {
                 Console.Out.WriteLine($"Found file {f.Name}");
@@ -34,11 +37,11 @@ namespace RelationalSubsettingLib.Functions
                 df.SaveToFile($"{settingsdir.FullName}\\{nameWithoutExtension}{ext}");
             }
             List<KeyRelationship> keyRelationships = new List<KeyRelationship>();
-            keyRelationships.SaveToFile($"{settingsdir.FullName}\\keyrelations.rdskrf");
+            keyRelationships.SaveToFile($"{settingsdir.FullName}\\{keyrelationFileName}");
             SubsettingOptions subsettingOptions = new SubsettingOptions();
             subsettingOptions.TargetPath = dir + "\\subset";
             Directory.CreateDirectory(subsettingOptions.TargetPath);
-            subsettingOptions.SaveToFile($"{settingsdir.FullName}\\settings.rdssf");
+            subsettingOptions.SaveToFile($"{settingsdir.FullName}\\{settingsFileName}");
         }
     }
 }

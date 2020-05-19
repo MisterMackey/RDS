@@ -10,6 +10,7 @@ namespace RelationalSubsettingLib.Functions
     {
         public void Run(string primaryFile, string primaryKey, string foreignFile, string foreignKey)
         {
+            string keyrelationFileName = Properties.Settings.KeyRelationshipFileName;
             string strRdsDir = Environment.CurrentDirectory + "\\.rds";
             DirectoryInfo rdsDirInfo = new DirectoryInfo(strRdsDir);
             string ext = Properties.Settings.DataSourceFileExtension;
@@ -56,7 +57,7 @@ namespace RelationalSubsettingLib.Functions
             Key prim = new Key(primaryFile, primaryKey);
             Key fore = new Key(foreignFile, foreignKey);
             KeyRelationship rel = new KeyRelationship(prim, fore);
-            List<KeyRelationship> keyRelationships = new List<KeyRelationship>().LoadFromFile($"{strRdsDir}\\keyrelations.rdskrf");
+            List<KeyRelationship> keyRelationships = new List<KeyRelationship>().LoadFromFile($"{strRdsDir}\\{keyrelationFileName}");
             if (keyRelationships.Contains(value: rel))
             {
                 Console.Error.WriteLine("This relationship is already defined");
