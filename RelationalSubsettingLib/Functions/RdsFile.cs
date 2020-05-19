@@ -106,10 +106,11 @@ namespace RelationalSubsettingLib.Functions
 
         private void Save(DataFileInfo f)
         {
+            string ext = Properties.Settings.DataSourceFileExtension;
             string settingsdir = $"{Environment.CurrentDirectory}\\.rds";
             int idx = f.Info.Name.LastIndexOf('.');
             string nameWithoutExtension = f.Info.Name.Substring(0, idx);
-            f.SaveToFile($"{settingsdir}\\{nameWithoutExtension}.rdsfif");
+            f.SaveToFile($"{settingsdir}\\{nameWithoutExtension}{ext}");
         }
 
         private void ReDetermineColumns(DataFileInfo f)
@@ -124,8 +125,9 @@ namespace RelationalSubsettingLib.Functions
         private IEnumerable<DataFileInfo> GetFilesBasedOnRegex(string regex)
         {
             Regex rg = new Regex(regex);
+            string ext = Properties.Settings.DataSourceFileExtension;
             DirectoryInfo rdsinfo = new DirectoryInfo($"{Environment.CurrentDirectory}\\.rds");
-            var DataFileInfos = rdsinfo.EnumerateFiles("*.rdsfif").
+            var DataFileInfos = rdsinfo.EnumerateFiles($"*{ext}").
                 Select(x => new DataFileInfo().LoadFromFile(x.FullName)).
                 Where(x => rg.IsMatch(x.Info.Name));
             return DataFileInfos;

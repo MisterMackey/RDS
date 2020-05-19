@@ -93,9 +93,10 @@ namespace RelationalSubsettingLib.Functions
 
         private bool IsValidInputForSetbase(string file, string column)
         {
+            string ext = Properties.Settings.DataSourceFileExtension;
             DirectoryInfo rdsdir = new DirectoryInfo($"{Environment.CurrentDirectory}\\.rds");
             var datafileinfo = rdsdir.EnumerateFiles(). //all files
-                Where(x => x.Extension.Equals(".rdsfif")). //with rds datafileinfo extension
+                Where(x => x.Extension.Equals(ext)). //with rds datafileinfo extension
                 Select(x => new DataFileInfo().LoadFromFile(x.FullName)). //select the datafileinfo objects that are loaded from those files
                 Where(x => x.Info.Name.Equals(file)). //where the original name equals the supplied name
                 FirstOrDefault(); //first one or null

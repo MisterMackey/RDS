@@ -277,8 +277,9 @@ namespace RelationalSubsettingLib.Subsetting
         private static List<DataFileInfo> RetrieveDataFileInfoList()
         {
             DirectoryInfo rdsinfo = new DirectoryInfo($"{Environment.CurrentDirectory}\\.rds");
+            string ext = Properties.Settings.DataSourceFileExtension;
             List<DataFileInfo> datafileinfos = rdsinfo.EnumerateFiles().
-                Where(x => x.Extension.Equals(".rdsfif")).
+                Where(x => x.Extension.Equals(ext)).
                 Select(x => new DataFileInfo().LoadFromFile(x.FullName)).
                 ToList();
             return datafileinfos;

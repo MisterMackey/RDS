@@ -24,13 +24,14 @@ namespace RelationalSubsettingLib.Functions
             var files = directoryInfo.EnumerateFiles().
                 Where(leFile => leFile.Extension.InList(extensionWhiteList)).
                 ToList();
+            string ext = Properties.Settings.DataSourceFileExtension;
             foreach (var f in files)
             {
                 Console.Out.WriteLine($"Found file {f.Name}");
                 DataFileInfo df = new DataFileInfo(f);
                 int idx = f.Name.LastIndexOf('.') ;
                 string nameWithoutExtension = f.Name.Substring(0, idx);
-                df.SaveToFile($"{settingsdir.FullName}\\{nameWithoutExtension}.rdsfif");
+                df.SaveToFile($"{settingsdir.FullName}\\{nameWithoutExtension}{ext}");
             }
             List<KeyRelationship> keyRelationships = new List<KeyRelationship>();
             keyRelationships.SaveToFile($"{settingsdir.FullName}\\keyrelations.rdskrf");

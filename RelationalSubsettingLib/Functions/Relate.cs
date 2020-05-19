@@ -12,7 +12,8 @@ namespace RelationalSubsettingLib.Functions
         {
             string strRdsDir = Environment.CurrentDirectory + "\\.rds";
             DirectoryInfo rdsDirInfo = new DirectoryInfo(strRdsDir);
-            var files = rdsDirInfo.EnumerateFiles().Where(f => f.Extension.Contains("rdsfif"));
+            string ext = Properties.Settings.DataSourceFileExtension;
+            var files = rdsDirInfo.EnumerateFiles().Where(f => f.Extension.Contains(ext));
             List<DataFileInfo> listOfInformation = new List<DataFileInfo>();
             foreach(var file in files)
             {
