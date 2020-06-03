@@ -1,5 +1,6 @@
 ﻿using CsvHelper;
 using Newtonsoft.Json;
+using RelationalSubsettingLib.Sources;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -33,12 +34,12 @@ namespace RelationalSubsettingLib.Subsetting
         private void Start()
         {
             Console.Out.WriteLine("Detecting files...");
-            List<DataFileInfo> datafileinfos = RetrieveDataFileInfoList();
-            Console.Out.WriteLine($"{datafileinfos.Count} files detected");
+            List<DataSourceInformation> DataSourceInformations = RetrieveDataSourceInformationList();
+            Console.Out.WriteLine($"{DataSourceInformations.Count} files detected");
 
             Console.Out.WriteLine("Loading base file");
             DataTable baseFileTable = new DataTable(m_Options.BaseFileName);
-            if (!TryLoadBaseFile(baseFileTable, datafileinfos))
+            if (!TryLoadBaseFile(baseFileTable, DataSourceInformations))
             {
                 return;
             }
@@ -60,8 +61,8 @@ namespace RelationalSubsettingLib.Subsetting
             baseFileTable = null;
             uniques = null;
             Console.Out.WriteLine("Writing basefile subset...");
-            var inf = datafileinfos.Where(x => x.Info.Name.Equals(m_Options.BaseFileName)).FirstOrDefault();
-            _CreateSubsetFile(BaseFileSubset, inf);
+            var inf = DataSourceInformations.Where(x => x.SourceName.Equals(m_Options.BaseFileName)).FirstOrDefault();
+            _CreateSubset(BaseFileSubset, inf);
             Console.Out.WriteLine("Write completed");
             Console.Out.WriteLine("Writing related files");
             List<KeyRelationship> relations = RetrieveKeyRelationships();
@@ -78,11 +79,11 @@ namespace RelationalSubsettingLib.Subsetting
             {
                 Console.Out.WriteLine("Loading related files");
                 bool recurse = true;
-                _SubsetRelatedFiles(BaseFileSubset, related, datafileinfos, recurse, m_Options.BaseFileName);
+                _SubsetRelatedFiles(BaseFileSubset, related, DataSourceInformations, recurse, m_Options.BaseFileName);
             }
         }
 
-        private void _SubsetRelatedFiles(DataTable baseFileSubset, List<KeyRelationship> relations, List<DataFileInfo> dfInfos, bool Recurse, string baseFileName)
+        private void _SubsetRelatedFiles(DataTable baseFileSubset, List<KeyRelationship> relations, List<DataSourceInformation> dfInfos, bool Recurse, string baseFileName)
         {
             foreach(var rel in relations)
             {
@@ -91,13 +92,13 @@ namespace RelationalSubsettingLib.Subsetting
                 string PrimaryFileColumnName = IsPrimaryColumnInBaseFile ? rel.Primary.Column : rel.Foreign.Column;
                 //same but reverse
                 string RelatedFileColumnName = IsPrimaryColumnInBaseFile ? rel.Foreign.Column : rel.Primary.Column;
-                //datafileinfo for related file
+                //DataSourceInformation for related file
                 string otherfileFileName = IsPrimaryColumnInBaseFile ? rel.Foreign.FileName : rel.Primary.FileName;
-                var otherFileDataFileInfo = dfInfos.
-                    Where(x => x.Info.Name.Equals(otherfileFileName)).FirstOrDefault();
+                var otherFileDataSourceInformation = dfInfos.
+                    Where(x => x.SourceName.Equals(otherfileFileName)).FirstOrDefault();
                 DataTable RelatedDataTable = new DataTable(otherfileFileName);
                 Console.Out.WriteLine($"Loading {otherfileFileName}");
-                LoadFileToDataTable(RelatedDataTable, otherFileDataFileInfo);
+                LoadFileToDataTable(RelatedDataTable, otherFileDataSourceInformation);
                 //select where exists, linq optimizer do ur magic :S
                 //actually lets optimize this so we definitely don't enumerate the inner query hundreds of times
                 List<string> validList = (from baseData in baseFileSubset.AsEnumerable()
@@ -107,7 +108,7 @@ namespace RelationalSubsettingLib.Subsetting
                                 where validList.
                                     Any(x => x.Equals((string)otherData[RelatedFileColumnName]))
                                 select otherData;
-                _CreateSubsetFile(ValidRowsFromSource, otherFileDataFileInfo, RelatedDataTable.Columns);
+                _CreateSubset(ValidRowsFromSource, otherFileDataSourceInformation, RelatedDataTable.Columns);
                 Console.Out.WriteLine($"{otherfileFileName}: subset created");
                 if (Recurse)
                 {
@@ -122,7 +123,7 @@ namespace RelationalSubsettingLib.Subsetting
                 }
             }
         }
-        private void _SubsetRelatedFiles(IEnumerable<DataRow> baseFileSubset, List<KeyRelationship> relations, List<DataFileInfo> dfInfos, bool Recurse, string baseFileName)
+        private void _SubsetRelatedFiles(IEnumerable<DataRow> baseFileSubset, List<KeyRelationship> relations, List<DataSourceInformation> dfInfos, bool Recurse, string baseFileName)
         {
             foreach (var rel in relations)
             {
@@ -131,13 +132,13 @@ namespace RelationalSubsettingLib.Subsetting
                 string PrimaryFileColumnName = IsPrimaryColumnInBaseFile ? rel.Primary.Column : rel.Foreign.Column;
                 //same but reverse
                 string RelatedFileColumnName = IsPrimaryColumnInBaseFile ? rel.Foreign.Column : rel.Primary.Column;
-                //datafileinfo for related file
+                //DataSourceInformation for related file
                 string otherfileFileName = IsPrimaryColumnInBaseFile ? rel.Foreign.FileName : rel.Primary.FileName;
-                var otherFileDataFileInfo = dfInfos.
-                    Where(x => x.Info.Name.Equals(otherfileFileName)).FirstOrDefault();
+                var otherFileDataSourceInformation = dfInfos.
+                    Where(x => x.SourceName.Equals(otherfileFileName)).FirstOrDefault();
                 DataTable RelatedDataTable = new DataTable(otherfileFileName);
                 Console.Out.WriteLine($"Loading {otherfileFileName}");
-                LoadFileToDataTable(RelatedDataTable, otherFileDataFileInfo);
+                LoadFileToDataTable(RelatedDataTable, otherFileDataSourceInformation);
                 //select where exists, linq optimizer do ur magic :S
                 //actually lets optimize this so we definitely don't enumerate the inner query hundreds of times
                 List<string> validList = (from baseData in baseFileSubset
@@ -147,7 +148,7 @@ namespace RelationalSubsettingLib.Subsetting
                                                  where validList.
                                                      Any(x => x.Equals((string)otherData[RelatedFileColumnName]))
                                                  select otherData;
-                _CreateSubsetFile(rowsIWant, otherFileDataFileInfo, RelatedDataTable.Columns);
+                _CreateSubset(rowsIWant, otherFileDataSourceInformation, RelatedDataTable.Columns);
                 Console.Out.WriteLine($"{otherfileFileName}: subset created");
                 if (Recurse)
                 {
@@ -169,8 +170,26 @@ namespace RelationalSubsettingLib.Subsetting
             return new List<KeyRelationship>().LoadFromFile(info.FullName);
         }
 
-        private void _CreateSubsetFile(DataTable dt, DataFileInfo info)
-        {            
+        private void _CreateSubset(DataTable dt, DataSourceInformation info)
+        {
+            if (info.GetType() == typeof(DataFileInfo))
+            {
+                DataFileInfo dfinfo = info as DataFileInfo;
+                _CreateSubsetDataFileInfo(dt, dfinfo);
+            }
+            if (info.GetType() == typeof(SourceTableInfo))
+            {
+                SourceTableInfo stinfo = info as SourceTableInfo;
+                _CreateSubsetSourceTableInfo(dt, stinfo);
+            }
+        }
+
+        private void _CreateSubsetSourceTableInfo(DataTable dt, SourceTableInfo info)
+        {
+            throw new NotImplementedException();
+        }
+        private void _CreateSubsetDataFileInfo(DataTable dt, DataFileInfo info)
+        {
             string path = $"{m_Options.TargetPath}\\{info.Info.Name}";
             if (path.Equals(info.Info.FullName))
             {
@@ -180,7 +199,24 @@ namespace RelationalSubsettingLib.Subsetting
             string delim = info.Delimiter;
             dt.ExportToDelimitedText(path, delim);
         }
-        private void _CreateSubsetFile(IEnumerable<DataRow> dt, DataFileInfo info, DataColumnCollection header)
+        private void _CreateSubset(IEnumerable<DataRow> dt, DataSourceInformation info, DataColumnCollection header)
+        {
+            if (info.GetType() == typeof(DataFileInfo))
+            {
+                DataFileInfo dfinfo = info as DataFileInfo;
+                _CreateSubsetDataFileInfo(dt, dfinfo, header);
+            }
+            if (info.GetType() == typeof(SourceTableInfo))
+            {
+                SourceTableInfo stinfo = info as SourceTableInfo;
+                __CreateSubsetSourceTableInfo(dt, stinfo, header);
+            }
+        }
+        private void __CreateSubsetSourceTableInfo(IEnumerable<DataRow> dt, SourceTableInfo info, DataColumnCollection header)
+        {
+            throw new NotImplementedException();
+        }
+        private void _CreateSubsetDataFileInfo(IEnumerable<DataRow> dt, DataFileInfo info, DataColumnCollection header)
         {
             string path = $"{m_Options.TargetPath}\\{info.Info.Name}";
             if (path.Equals(info.Info.FullName))
@@ -191,7 +227,6 @@ namespace RelationalSubsettingLib.Subsetting
             string delim = info.Delimiter;
             dt.ExportToDelimitedText(path, delim, header);
         }
-
 
         private DataTable SubSetBaseFile(DataTable baseFileTable, DataTable selected)
         {
@@ -245,9 +280,9 @@ namespace RelationalSubsettingLib.Subsetting
             return uniques;
         }
 
-        private bool TryLoadBaseFile(DataTable baseFileTable, List<DataFileInfo> datafileinfos)
+        private bool TryLoadBaseFile(DataTable baseFileTable, List<DataSourceInformation> DataSourceInformations)
         {
-            var baseDfInfo = datafileinfos.Where(x => x.Info.Name.Equals(m_Options.BaseFileName)).FirstOrDefault();
+            var baseDfInfo = DataSourceInformations.Where(x => x.SourceName.Equals(m_Options.BaseFileName)).FirstOrDefault();
             if (baseDfInfo == null)
             {
                 Console.Error.WriteLine("Basefile not found amongst files. exiting");
@@ -257,31 +292,21 @@ namespace RelationalSubsettingLib.Subsetting
             return true;
         }
 
-        private static void LoadFileToDataTable(DataTable table, DataFileInfo dfInfo)
+        private static void LoadFileToDataTable(DataTable table, DataSourceInformation dfInfo)
         {
-            using (StreamReader reader = new StreamReader(dfInfo.Info.FullName))
-            {
-                using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                {
-                    csv.Configuration.Delimiter = dfInfo.Delimiter;
-                    using (CsvDataReader csvreader = new CsvDataReader(csv))
-                    {
-                        table.Load(csvreader);
-                    }
-                }
-            }
+            dfInfo.LoadToDataTable(table);
         }
 
-        private static List<DataFileInfo> RetrieveDataFileInfoList()
+        private static List<DataSourceInformation> RetrieveDataSourceInformationList()
         {
             string rdsDir = Properties.Settings.RdsDirectoryName;
             DirectoryInfo rdsinfo = new DirectoryInfo($"{Environment.CurrentDirectory}\\{rdsDir}");
             string ext = Properties.Settings.DataSourceFileExtension;
-            List<DataFileInfo> datafileinfos = rdsinfo.EnumerateFiles().
+            List<DataSourceInformation> DataSourceInformations = rdsinfo.EnumerateFiles().
                 Where(x => x.Extension.Equals(ext)).
-                Select(x => new DataFileInfo().LoadFromFile(x.FullName)).
+                Select(x => DataSourceInformation.LoadFromFile(x.FullName)).
                 ToList();
-            return datafileinfos;
+            return DataSourceInformations;
         }
     }
 }

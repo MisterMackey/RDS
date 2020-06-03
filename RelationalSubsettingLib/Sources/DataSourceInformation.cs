@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Text;
 
@@ -17,5 +18,16 @@ namespace RelationalSubsettingLib
             return ret;
         }
         public abstract string ConcreteType { get; }
+        /// <summary>
+        /// The name of the file for files, name of the schema.table for tables
+        /// </summary>
+        public abstract string SourceName {get;}
+        /// <summary>
+        /// for tables: connectionstring and schema.table as a json dict (string form)
+        /// for files: full path
+        /// </summary>
+        public abstract string FullyQualifiedName { get; }
+
+        public abstract void LoadToDataTable(DataTable table);
     }
 }

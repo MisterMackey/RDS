@@ -1,5 +1,8 @@
-﻿using System;
+﻿using CsvHelper;
+using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -30,5 +33,23 @@ namespace RelationalSubsettingLib
         {
 
         }
+
+        public override void LoadToDataTable(DataTable table)
+        {
+            using (StreamReader reader = new StreamReader(Info.FullName))
+            {
+                using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    csv.Configuration.Delimiter = Delimiter;
+                    using (CsvDataReader csvreader = new CsvDataReader(csv))
+                    {
+                        table.Load(csvreader);
+                    }
+                }
+            }
+        }
+
+        public override string FullyQualifiedName { get => Info.FullName; }
+        public override string SourceName => Info.Name;
     }
 }
