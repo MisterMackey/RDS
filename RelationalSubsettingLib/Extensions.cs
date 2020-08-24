@@ -3,10 +3,16 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
+using System.Data.SqlTypes;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using D2S.Library.Utilities;
+using D2S.Library.Services;
+using D2S.Library.Pipelines;
+using RelationalSubsettingLib.Sql;
 
 namespace RelationalSubsettingLib
 {
@@ -336,6 +342,100 @@ namespace RelationalSubsettingLib
                     }
                 }
             }
+        }
+
+        public static void ExportToSqlTable(this IEnumerable<DataRow> source, DataColumnCollection header, string connectionString, string schemaAndTable, bool AppendIfTableExists = false)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                //does table exist?
+                bool tableExists = DoesTableExist(schemaAndTable, conn);
+                //error if append is not allowed and table exists
+                if (tableExists && !AppendIfTableExists)
+                {
+                    Console.Error.WriteLine($"{schemaAndTable} already exists and appending is set to false");
+                    return;
+                }
+                if (!tableExists)
+                {
+                    //create table if it doesn't exist
+                    string[] cols = new string[header.Count];
+                    string[] datatypes = new string[header.Count];
+                    for (int i = 0; i < header.Count; i++)
+                    {
+                        cols[i] = header[i].ColumnName;
+                        datatypes[i] = DataTypeMapping.SystemToSql[header[i].DataType];
+                    }
+                    DestinationTableCreator dtc = new DestinationTableCreator(schemaAndTable, cols, datatypes);
+                    //using d2s class for this
+                    ConfigVariables.Instance.ConfiguredConnection = connectionString; //this is where the d2s class get their connstring from
+                    dtc.CreateTable();
+                }
+                //fill table
+                using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
+                {
+                    bulk.BatchSize = 10000;
+                    bulk.DestinationTableName = schemaAndTable;
+                    bulk.WriteToServer(rows: source.ToArray());
+                }
+
+            }
+        }
+
+
+        public static void ExportToSqlTable(this DataTable source, string connectionString, string schemaAndTable, bool AppendIfTableExists = false)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                //does table exist?
+                bool tableExists = DoesTableExist(schemaAndTable, conn);
+                //error if append is not allowed and table exists
+                if (tableExists && !AppendIfTableExists)
+                {
+                    Console.Error.WriteLine($"{schemaAndTable} already exists and appending is set to false");
+                    return;
+                }
+                if (!tableExists)
+                {
+                    //create table if it doesn't exist
+                    string[] cols = new string[source.Columns.Count];
+                    string[] datatypes = new string[source.Columns.Count];
+                    for (int i = 0; i < source.Columns.Count; i++)
+                    {
+                        cols[i] = source.Columns[i].ColumnName;
+                        datatypes[i] = DataTypeMapping.SystemToSql[source.Columns[i].DataType];
+                    }
+                    DestinationTableCreator dtc = new DestinationTableCreator(schemaAndTable, cols, datatypes);
+                    //using d2s class for this
+                    ConfigVariables.Instance.ConfiguredConnection = connectionString; //this is where the d2s class get their connstring from
+                    dtc.CreateTable();
+                }
+                //fill table
+                using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
+                {
+                    bulk.BatchSize = 10000;
+                    bulk.DestinationTableName = schemaAndTable;
+                    bulk.WriteToServer(source);
+                }
+
+            }
+        }
+        private static bool DoesTableExist(string schemaAndTable, SqlConnection conn)
+        {
+            bool tableExists;
+            using (SqlCommand comm = new SqlCommand())
+            {
+                comm.Connection = conn;
+                comm.CommandText = "select object_id(@object)";
+                comm.Parameters.AddWithValue("@object", schemaAndTable);
+                comm.Prepare();
+                var retValue = comm.ExecuteScalar();
+                tableExists = retValue != null;
+            }
+
+            return tableExists;
         }
 
     }

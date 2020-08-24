@@ -159,7 +159,7 @@ namespace RelationalSubsettingLib.Subsetting
                         Where(x => (x.Primary.FileName.Equals(otherfileFileName) && !x.Foreign.FileName.Equals(baseFileName))
                         || (x.Foreign.FileName.Equals(otherfileFileName) && !x.Primary.FileName.Equals(baseFileName))).
                         ToList();
-                    _SubsetRelatedFiles(RelatedDataTable, related, dfInfos, true, otherfileFileName);
+                    _SubsetRelatedFiles(RelatedDataTable, related, dfInfos, Recurse:true, otherfileFileName);
                 }
             }
         }
@@ -186,7 +186,8 @@ namespace RelationalSubsettingLib.Subsetting
 
         private void _CreateSubsetSourceTableInfo(DataTable dt, SourceTableInfo info)
         {
-            throw new NotImplementedException();
+            string schemaAndTable = $"{info.SchemaName}.{info.TableName}";
+            dt.ExportToSqlTable(info.ConnectionString, schemaAndTable, true);
         }
         private void _CreateSubsetDataFileInfo(DataTable dt, DataFileInfo info)
         {

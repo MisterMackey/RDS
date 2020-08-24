@@ -11,6 +11,9 @@ namespace RelationalSubsettingLib.Properties
         private static string _KeyRelationshipFileName = "keyrelations.rdskrf";
         private static string _RdsDirectoryName = ".rds";
         private static string _RdsSubsettingSettingsFileName = "subsetsettings.rdssf";
+        private static string _SqlDecimalPrecision = "DECIMAL(38,10)";
+        private static int _PreferredSqlStringLength = 500;
+        private static string _ConnectionAliasFileName = "aliases.rdsaf";
         #endregion
 
         #region Public properties
@@ -30,6 +33,18 @@ namespace RelationalSubsettingLib.Properties
         /// name of the file containing settings for the subsetting function
         /// </summary>
         public static string RdsSubsettingSettingsFileName { get => _RdsSubsettingSettingsFileName; }
+        /// <summary>
+        /// Precision of the sql decimal datatype used when a column has this datatype. in the form of DECIMAL(p,s)
+        /// </summary>
+        public static string SqlDecimalPrecision { get => _SqlDecimalPrecision; }
+        /// <summary>
+        /// the preferred length of Varchar columns in sql when a table is created
+        /// </summary>
+        public static int PrefferedSqlStringLength { get => _PreferredSqlStringLength; }
+        /// <summary>
+        /// The name of the file holding a json formatted dictionary containing connection strings. Keyed by user defined Aliases.
+        /// </summary>
+        public static string ConnectionAliasFileName { get => _ConnectionAliasFileName; }
         #endregion
     }
 }

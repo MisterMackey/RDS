@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RelationalSubsettingLib.Sql;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -76,6 +77,20 @@ namespace RelationalSubsettingLib.Functions
         private void modeAddTable(string[] obj)
         {
             throw new NotImplementedException();
+            if (obj.Length != 4)
+            {
+                Console.Error.WriteLine("Correct usage: rds File -AddTable {TableName} {ConnectionAlias}");
+                return;
+            }
+            //verify that a correct ConnectionAlias has been provided
+            string alias = obj[3];
+            ConnectionAliases aliases = new ConnectionAliases();
+            if (!aliases.ContainsKey(alias))
+            {
+                Console.Error.WriteLine($"Could not locate connection alias by name of {alias}. Use rds connection -Add {{alias}} {{connectionstring}} to add an alias");
+                return;
+            }
+
         }
 
         private void modeAddFile(string[] obj)
