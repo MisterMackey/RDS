@@ -13,6 +13,10 @@ namespace RelationalSubsettingLib.Sql
     {
         private Dictionary<string, string> m_Aliases;
 
+        public ConnectionAliases()
+        {
+            ReadFile();
+        }
 
         #region interface
         public string this[string key]
@@ -99,7 +103,14 @@ namespace RelationalSubsettingLib.Sql
         private void ReadFile()
         {
             string path = $"{Directory.GetCurrentDirectory()}\\.rds\\{Settings.ConnectionAliasFileName}";
-            m_Aliases.LoadFromFile(path);
+            if (File.Exists(path))
+            {
+                m_Aliases = m_Aliases.LoadFromFile(path); 
+            }
+            else
+            {
+                m_Aliases = new Dictionary<string, string>();
+            }
         }
         private void RefreshFile()
         {
