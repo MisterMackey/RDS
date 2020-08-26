@@ -430,9 +430,11 @@ namespace RelationalSubsettingLib
                 comm.Connection = conn;
                 comm.CommandText = "select object_id(@object)";
                 comm.Parameters.AddWithValue("@object", schemaAndTable);
+                comm.Parameters[0].DbType = DbType.String;
+                comm.Parameters[0].Size = 1000;
                 comm.Prepare();
                 var retValue = comm.ExecuteScalar();
-                tableExists = retValue != null;
+                tableExists = retValue != DBNull.Value;
             }
 
             return tableExists;

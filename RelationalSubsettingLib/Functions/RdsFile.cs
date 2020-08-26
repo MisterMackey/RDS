@@ -1,4 +1,6 @@
-﻿using RelationalSubsettingLib.Sql;
+﻿using RelationalSubsettingLib.Properties;
+using RelationalSubsettingLib.Sources;
+using RelationalSubsettingLib.Sql;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -76,14 +78,13 @@ namespace RelationalSubsettingLib.Functions
 
         private void modeAddTable(string[] obj)
         {
-            throw new NotImplementedException();
-            if (obj.Length != 4)
+            if (obj.Length != 5)
             {
-                Console.Error.WriteLine("Correct usage: rds File -AddTable {TableName} {ConnectionAlias}");
+                Console.Error.WriteLine("Correct usage: rds File -AddTable {Schemaname} {TableName} {ConnectionAlias}");
                 return;
             }
             //verify that a correct ConnectionAlias has been provided
-            string alias = obj[3];
+            string alias = obj[4];
             ConnectionAliases aliases = new ConnectionAliases();
             if (!aliases.ContainsKey(alias))
             {
@@ -91,6 +92,9 @@ namespace RelationalSubsettingLib.Functions
                 return;
             }
 
+            SourceTableInfo source = new SourceTableInfo(aliases[alias], obj[2], obj[3]);
+            string filename = $"{Environment.CurrentDirectory}\\.rds\\{source.SourceName}.{Settings.DataSourceFileExtension}";
+            source.SaveToFile(filename); 
         }
 
         private void modeAddFile(string[] obj)

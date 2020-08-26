@@ -2,6 +2,7 @@
 using RelationalSubsettingLib;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace RelationalSubsettingLib.Tests
@@ -9,10 +10,21 @@ namespace RelationalSubsettingLib.Tests
     [TestClass()]
     public class ExtensionsTests
     {
+        private string connstring = "Server = (localdb)\\MSSQLLocalDB; Initial Catalog=master; Integrated Security=true;";
+
         [TestMethod()]
         public void ExportToSqlTableTest()
         {
-            Assert.Fail();
+            DataTable dt = new DataTable("hurpTest");
+            dt.Columns.Add("TestColumn");
+            for (int i = 0; i < 10; i++)
+            {
+                var r = dt.NewRow();
+                r[0] = "Hurp";
+                dt.Rows.Add(r);
+            }
+            dt.ExportToSqlTable(connstring, "dbo.hurpTest", true);
+            dt.ExportToSqlTable(connstring, "dbo.hurpTest", false);
         }
 
         [TestMethod()]

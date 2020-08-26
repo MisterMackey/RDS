@@ -46,16 +46,19 @@ namespace RelationalSubsettingLib.Sql
         public void Add(string key, string value)
         {
             ((IDictionary<string, string>)m_Aliases).Add(key, value);
+            RefreshFile();
         }
 
         public void Add(KeyValuePair<string, string> item)
         {
             ((IDictionary<string, string>)m_Aliases).Add(item);
+            RefreshFile();
         }
 
         public void Clear()
         {
             ((IDictionary<string, string>)m_Aliases).Clear();
+            RefreshFile();
         }
 
         public bool Contains(KeyValuePair<string, string> item)
@@ -80,12 +83,16 @@ namespace RelationalSubsettingLib.Sql
 
         public bool Remove(string key)
         {
-            return ((IDictionary<string, string>)m_Aliases).Remove(key);
+            var r = ((IDictionary<string, string>)m_Aliases).Remove(key);
+            RefreshFile();
+            return r;
         }
 
         public bool Remove(KeyValuePair<string, string> item)
         {
-            return ((IDictionary<string, string>)m_Aliases).Remove(item);
+            var r = ((IDictionary<string, string>)m_Aliases).Remove(item);
+            RefreshFile();
+            return r;
         }
 
         public bool TryGetValue(string key, out string value)
