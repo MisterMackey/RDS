@@ -29,5 +29,6 @@ namespace RelationalSubsettingLib
         public abstract string FullyQualifiedName { get; }
 
         public abstract void LoadToDataTable(DataTable table);
+        public abstract string[] Columns { get; set; }
     }
 }

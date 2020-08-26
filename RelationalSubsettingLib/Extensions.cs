@@ -344,7 +344,7 @@ namespace RelationalSubsettingLib
             }
         }
 
-        public static void ExportToSqlTable(this IEnumerable<DataRow> source, DataColumnCollection header, string connectionString, string schemaAndTable, bool AppendIfTableExists = false)
+        public static void ExportToSqlTable(this IEnumerable<DataRow> source, DataColumnCollection header, string connectionString, string schemaAndTable, bool AppendIfTableExists = false, bool RecreateIfTableExists = true)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
@@ -354,23 +354,19 @@ namespace RelationalSubsettingLib
                 //error if append is not allowed and table exists
                 if (tableExists && !AppendIfTableExists)
                 {
-                    Console.Error.WriteLine($"{schemaAndTable} already exists and appending is set to false");
-                    return;
+                    if (!RecreateIfTableExists)
+                    {
+                        Console.Error.WriteLine($"{schemaAndTable} already exists and appending/recreating is set to false");
+                        return;
+                    }
+                    else
+                    {
+                        CreateOrRecreateTargetTable(header, connectionString, schemaAndTable);
+                    }
                 }
                 if (!tableExists)
                 {
-                    //create table if it doesn't exist
-                    string[] cols = new string[header.Count];
-                    string[] datatypes = new string[header.Count];
-                    for (int i = 0; i < header.Count; i++)
-                    {
-                        cols[i] = header[i].ColumnName;
-                        datatypes[i] = DataTypeMapping.SystemToSql[header[i].DataType];
-                    }
-                    DestinationTableCreator dtc = new DestinationTableCreator(schemaAndTable, cols, datatypes);
-                    //using d2s class for this
-                    ConfigVariables.Instance.ConfiguredConnection = connectionString; //this is where the d2s class get their connstring from
-                    dtc.CreateTable();
+                    CreateOrRecreateTargetTable(header, connectionString, schemaAndTable);
                 }
                 //fill table
                 using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
@@ -383,6 +379,23 @@ namespace RelationalSubsettingLib
             }
         }
 
+        private static void CreateOrRecreateTargetTable(DataColumnCollection header, string connectionString, string schemaAndTable)
+        {
+            //drop (if exists) and recreate
+            string[] cols = new string[header.Count];
+            string[] datatypes = new string[header.Count];
+            for (int i = 0; i < header.Count; i++)
+            {
+                cols[i] = header[i].ColumnName;
+                datatypes[i] = DataTypeMapping.SystemToSql[header[i].DataType];
+            }
+            DestinationTableCreator dtc = new DestinationTableCreator(schemaAndTable, cols, datatypes);
+            //using d2s class for this
+            ConfigVariables.Instance.ConfiguredConnection = connectionString; //this is where the d2s class get their connstring from
+            DestinationTableDropper dtd = new DestinationTableDropper(schemaAndTable);
+            dtd.DropTable();
+            dtc.CreateTable();
+        }
 
         public static void ExportToSqlTable(this DataTable source, string connectionString, string schemaAndTable, bool AppendIfTableExists = false)
         {

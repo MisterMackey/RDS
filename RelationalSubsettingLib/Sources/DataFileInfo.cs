@@ -17,7 +17,7 @@ namespace RelationalSubsettingLib
     {
         public override string ConcreteType => "DataFileInfo";
         public FileInfo Info;
-        public string[] Columns;
+        public override string[] Columns { get; set; }
         public string Delimiter;
         public DataFileInfo(FileInfo information) : this()
         {

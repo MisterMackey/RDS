@@ -15,16 +15,16 @@ namespace RelationalSubsettingLib.Functions
             DirectoryInfo rdsDirInfo = new DirectoryInfo(strRdsDir);
             string ext = Properties.Settings.DataSourceFileExtension;
             var files = rdsDirInfo.EnumerateFiles().Where(f => f.Extension.Contains(ext));
-            List<DataFileInfo> listOfInformation = new List<DataFileInfo>();
+            List<DataSourceInformation> listOfInformation = new List<DataSourceInformation>();
             foreach(var file in files)
             {
-                listOfInformation.Add(new DataFileInfo().LoadFromFile(file.FullName));
+                listOfInformation.Add(DataSourceInformation.LoadFromFile(file.FullName));
             }
-            //check of both files have their info defined in the rds directory and have the required column
+            //check of both sources have their info defined in the rds directory and have the required column
             var primary = listOfInformation.FirstOrDefault(
-                definition => definition.Info.Name.Equals(primaryFile));
+                sauce => sauce.SourceName.Equals(primaryFile));
             var foreign = listOfInformation.FirstOrDefault(
-                definition => definition.Info.Name.Equals(foreignFile));
+                sauce => sauce.SourceName.Equals(foreignFile));
             bool IsInErrorState = false;
             if (primary == null)
             {

@@ -15,7 +15,7 @@ namespace RelationalSubsettingLib.Sources
         public string DatabaseName;
         public string SchemaName;
         public string TableName;
-        public string[] Columns;
+        public override string[] Columns { get; set; }
 
         public override string ConcreteType => "SourceTableInfo";
 
