@@ -93,7 +93,7 @@ namespace RelationalSubsettingLib.Functions
             }
 
             SourceTableInfo source = new SourceTableInfo(aliases[alias], obj[2], obj[3]);
-            string filename = $"{Environment.CurrentDirectory}\\.rds\\{source.SourceName}.{Settings.DataSourceFileExtension}";
+            string filename = $"{Environment.CurrentDirectory}\\.rds\\{source.SourceName}{Settings.DataSourceFileExtension}";
             source.SaveToFile(filename); 
         }
 

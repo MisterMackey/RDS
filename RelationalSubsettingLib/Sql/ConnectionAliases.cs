@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace RelationalSubsettingLib.Sql
@@ -68,7 +69,7 @@ namespace RelationalSubsettingLib.Sql
 
         public bool ContainsKey(string key)
         {
-            return ((IDictionary<string, string>)m_Aliases).ContainsKey(key);
+            return m_Aliases.ContainsKey(key);
         }
 
         public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)

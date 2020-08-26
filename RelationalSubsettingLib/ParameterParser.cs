@@ -27,9 +27,9 @@ namespace RelationalSubsettingLib
                 ,{"DEBUG_DUMPRELATIONINFO", paramDEBUG_DUMPRELATIONINFO}
                 ,{"SUBSET", paramSUBSET}
                 ,{"FILE", paramFILE}
+                ,{"CONNECTION", paramCONNECTION}
             };
         }
-
 
 
         public void ParseArgument(string[] args)
@@ -71,7 +71,6 @@ namespace RelationalSubsettingLib
             DEBUG_Currentdir dir = new DEBUG_Currentdir();
             dir.Run();
         }
-
 
         private static void paramINIT(string[] obj)
         {
@@ -144,6 +143,17 @@ namespace RelationalSubsettingLib
             RdsFile rdsFile = new RdsFile();
             rdsFile.Run(obj);
         }
+        [RequiresInitializedRepository(),
+            ValidOptions(CommandOptions.Add),
+            ValidOptions(CommandOptions.Remove),
+            ValidOptions(CommandOptions.Update),
+            ValidOptions(CommandOptions.List)]
+        private void paramCONNECTION(string[] obj)
+        {
+            Connection c = new Connection();
+            c.Run(obj);
+        }
+
 
         #endregion
 

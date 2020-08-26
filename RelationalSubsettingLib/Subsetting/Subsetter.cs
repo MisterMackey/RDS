@@ -186,7 +186,7 @@ namespace RelationalSubsettingLib.Subsetting
 
         private void _CreateSubsetSourceTableInfo(DataTable dt, SourceTableInfo info)
         {
-            string schemaAndTable = $"{info.SchemaName}.{info.TableName}";
+            string schemaAndTable = $"{info.SchemaName}.{info.TableName}_Subset";
             dt.ExportToSqlTable(info.ConnectionString, schemaAndTable, true);
         }
         private void _CreateSubsetDataFileInfo(DataTable dt, DataFileInfo info)
@@ -215,7 +215,7 @@ namespace RelationalSubsettingLib.Subsetting
         }
         private void __CreateSubsetSourceTableInfo(IEnumerable<DataRow> dt, SourceTableInfo info, DataColumnCollection header)
         {
-            throw new NotImplementedException();
+            dt.ExportToSqlTable(header, info.ConnectionString, $"{info.SchemaName}.{info.TableName}_Subeset", AppendIfTableExists: false);
         }
         private void _CreateSubsetDataFileInfo(IEnumerable<DataRow> dt, DataFileInfo info, DataColumnCollection header)
         {

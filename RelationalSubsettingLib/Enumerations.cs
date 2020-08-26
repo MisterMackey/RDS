@@ -18,6 +18,10 @@ namespace RelationalSubsettingLib
         a,
         All,
         AddFile,
-        AddTable
+        AddTable,
+        Add,
+        Remove,
+        Update,
+        List
     }
 }

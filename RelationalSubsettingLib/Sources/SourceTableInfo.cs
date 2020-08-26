@@ -40,6 +40,8 @@ namespace RelationalSubsettingLib.Sources
                 using (SqlCommand comm = new SqlCommand(cmd, conn))
                 {
                     comm.Parameters.AddWithValue("@object", $"{schema}.{table}");
+                    comm.Parameters[0].DbType = DbType.String;
+                    comm.Parameters[0].Size = 1000;
                     conn.Open();
                     comm.Prepare();
                     var returnVals = comm.ExecuteReader();
