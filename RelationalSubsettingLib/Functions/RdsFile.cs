@@ -26,7 +26,8 @@ namespace RelationalSubsettingLib.Functions
                 {"-d", modeSetDelimiter },
                 {"-SETDELIMITER", modeSetDelimiter },
                 {"-ADDFILE", modeAddFile },
-                {"-ADDTABLE", modeAddTable }
+                {"-ADDTABLE", modeAddTable },
+                {"-MASK", modeMask }
             };
         }
 
@@ -122,7 +123,10 @@ namespace RelationalSubsettingLib.Functions
             Console.Out.WriteLine($"Added file {path}.\r\nDelimiter: {DFInfo.Delimiter}");
 
         }
-
+        private void modeMask(string[] obj)
+        {
+            throw new NotImplementedException();
+        }
         private void Save(DataFileInfo f)
         {
             string ext = Properties.Settings.DataSourceFileExtension;

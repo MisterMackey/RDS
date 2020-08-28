@@ -30,5 +30,6 @@ namespace RelationalSubsettingLib
 
         public abstract void LoadToDataTable(DataTable table);
         public abstract string[] Columns { get; set; }
+        public abstract Dictionary<string, MaskingOptions> MaskingInformation { get; }
     }
 }

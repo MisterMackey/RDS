@@ -55,13 +55,20 @@ namespace RelationalSubsettingLib.Subsetting
             Console.Out.WriteLine("Subsetting base file...");
             DataTable BaseFileSubset = SubSetBaseFile(baseFileTable, selected);
             Console.Out.WriteLine("Subsetting succeeded");
+            //apply masking where necessary
+            var inf = DataSourceInformations.Where(x => x.SourceName.Equals(m_Options.BaseFileName)).FirstOrDefault();
+
+            if (inf.MaskingInformation.Any())
+            {
+                throw new NotImplementedException("Masking not yet implemented");
+            }
+
             //clean some stuff up i guess
             baseFileTable.Dispose();
             uniques.Dispose();
             baseFileTable = null;
             uniques = null;
             Console.Out.WriteLine("Writing basefile subset...");
-            var inf = DataSourceInformations.Where(x => x.SourceName.Equals(m_Options.BaseFileName)).FirstOrDefault();
             _CreateSubset(BaseFileSubset, inf);
             Console.Out.WriteLine("Write completed");
             Console.Out.WriteLine("Writing related files");

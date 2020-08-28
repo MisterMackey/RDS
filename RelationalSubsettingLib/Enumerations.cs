@@ -24,4 +24,11 @@ namespace RelationalSubsettingLib
         Update,
         List
     }
+
+    public enum MaskingOptions
+    {
+        Replace,
+        Randomize,
+        Generate
+    }
 }

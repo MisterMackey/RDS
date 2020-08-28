@@ -19,6 +19,7 @@ namespace RelationalSubsettingLib
         public FileInfo Info;
         public override string[] Columns { get; set; }
         public string Delimiter;
+        public override Dictionary<string, MaskingOptions> MaskingInformation { get; }
         public DataFileInfo(FileInfo information) : this()
         {
             Info = information;
@@ -31,7 +32,7 @@ namespace RelationalSubsettingLib
         }
         public DataFileInfo()
         {
-
+            MaskingInformation = new Dictionary<string, MaskingOptions>();
         }
 
         public override void LoadToDataTable(DataTable table)

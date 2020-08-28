@@ -23,6 +23,7 @@ namespace RelationalSubsettingLib.Sources
 
         public override string FullyQualifiedName => FQDN();
 
+        public override Dictionary<string, MaskingOptions> MaskingInformation { get; }
 
         public override void LoadToDataTable(DataTable table)
         {
@@ -57,6 +58,7 @@ namespace RelationalSubsettingLib.Sources
             SchemaName = schema;
             TableName = table;
             ConnectionString = connectionString;
+            MaskingInformation = new Dictionary<string, MaskingOptions>();
         }
 
         private void ExtractServerAndDatabaseFromConnectionString(string connectionString)
