@@ -27,8 +27,8 @@ namespace RelationalSubsettingLib
 
     public enum MaskingOptions
     {
-        Replace,
-        Randomize,
-        Generate
+        Replace, //put a static value in place of old values
+        Randomize, //assign random values from a list (list generated from the actual dataset)
+        Generate //have some algorithm to make brand new values
     }
 }

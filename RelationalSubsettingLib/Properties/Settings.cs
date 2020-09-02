@@ -14,6 +14,7 @@ namespace RelationalSubsettingLib.Properties
         private static string _SqlDecimalPrecision = "DECIMAL(38,10)";
         private static int _PreferredSqlStringLength = 500;
         private static string _ConnectionAliasFileName = "aliases.rdsaf";
+        private static string _DefaultReplacementValueForReplaceStrategy = "";
         #endregion
 
         #region Public properties
@@ -45,6 +46,8 @@ namespace RelationalSubsettingLib.Properties
         /// The name of the file holding a json formatted dictionary containing connection strings. Keyed by user defined Aliases.
         /// </summary>
         public static string ConnectionAliasFileName { get => _ConnectionAliasFileName; }
+
+        public static string DefaultReplacementValueForReplaceStrategy { get => _DefaultReplacementValueForReplaceStrategy; }
         #endregion
     }
 }
