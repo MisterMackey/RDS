@@ -5,19 +5,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 namespace RelationalSubsettingLib.Functions
 {
     /// <summary>
-    /// corresponds to File param but i don't wanna call it File otherwise it must do battle
-    /// against System.IO.File in the autocorrect
+    /// corresponds to File param but i don't wanna call it File otherwise it must do battle against System.IO.File in
+    /// the autocorrect
     /// </summary>
     public class RdsFile
     {
+        #region Private Fields
+
         private Dictionary<string, Action<string[]>> ModeMapping;
+
+        #endregion Private Fields
+
+        #region Public Constructors
 
         public RdsFile()
         {
@@ -31,6 +35,9 @@ namespace RelationalSubsettingLib.Functions
             };
         }
 
+        #endregion Public Constructors
+
+        #region Public Methods
 
         public void Run(string[] args)
         {
@@ -43,59 +50,19 @@ namespace RelationalSubsettingLib.Functions
             ModeMapping[mode](args);
         }
 
-        private void modeSetDelimiter(string[] obj)
-        {
-            //correct usage: rds File -d {filename} {delim}. if -a is given instead of filename
-            //set given delimter for ALL files. filename can be regex pattern
-            if (obj.Length != 4)
-            {
-                Console.Error.WriteLine("Correct usage: rds File -d {filenameRegex | -a} {delim}");
-                return;
-            }
-            string regex;
-            if (obj[2] == "-a" || obj[2] == "All")
-            {
-                regex = ".+";
-            }
-            else
-            {
-                regex = obj[2];
-            }
-            string delim = obj[3];
-            SetDelimiterForFiles(regex, delim);
-        }
+        #endregion Public Methods
 
-        private void SetDelimiterForFiles(string regex, string delim)
-        {
-            var files = GetFilesBasedOnRegex(regex);
-            foreach (var f in files)
-            {
-                Console.Out.WriteLine($"changing delimiter of {f.Info.Name} to {delim}.");
-                f.Delimiter = delim;
-                ReDetermineColumns(f);
-                Save(f);
-            }
-        }
+        #region Private Methods
 
-        private void modeAddTable(string[] obj)
+        private IEnumerable<DataFileInfo> GetFilesBasedOnRegex(string regex)
         {
-            if (obj.Length != 5)
-            {
-                Console.Error.WriteLine("Correct usage: rds File -AddTable {Schemaname} {TableName} {ConnectionAlias}");
-                return;
-            }
-            //verify that a correct ConnectionAlias has been provided
-            string alias = obj[4];
-            ConnectionAliases aliases = new ConnectionAliases();
-            if (!aliases.ContainsKey(alias))
-            {
-                Console.Error.WriteLine($"Could not locate connection alias by name of {alias}. Use rds connection -Add {{alias}} {{connectionstring}} to add an alias");
-                return;
-            }
-
-            SourceTableInfo source = new SourceTableInfo(aliases[alias], obj[2], obj[3]);
-            string filename = $"{Environment.CurrentDirectory}\\.rds\\{source.SourceName}{Settings.DataSourceFileExtension}";
-            source.SaveToFile(filename); 
+            Regex rg = new Regex(regex);
+            string ext = Properties.Settings.DataSourceFileExtension;
+            DirectoryInfo rdsinfo = new DirectoryInfo($"{Environment.CurrentDirectory}\\.rds");
+            var DataFileInfos = rdsinfo.EnumerateFiles($"*{ext}").
+                Select(x => new DataFileInfo().LoadFromFile(x.FullName)).
+                Where(x => rg.IsMatch(x.Info.Name));
+            return DataFileInfos;
         }
 
         private void modeAddFile(string[] obj)
@@ -121,12 +88,65 @@ namespace RelationalSubsettingLib.Functions
             }
             Save(DFInfo);
             Console.Out.WriteLine($"Added file {path}.\r\nDelimiter: {DFInfo.Delimiter}");
-
         }
+
+        private void modeAddTable(string[] obj)
+        {
+            if (obj.Length != 5)
+            {
+                Console.Error.WriteLine("Correct usage: rds File -AddTable {Schemaname} {TableName} {ConnectionAlias}");
+                return;
+            }
+            //verify that a correct ConnectionAlias has been provided
+            string alias = obj[4];
+            ConnectionAliases aliases = new ConnectionAliases();
+            if (!aliases.ContainsKey(alias))
+            {
+                Console.Error.WriteLine($"Could not locate connection alias by name of {alias}. Use rds connection -Add {{alias}} {{connectionstring}} to add an alias");
+                return;
+            }
+
+            SourceTableInfo source = new SourceTableInfo(aliases[alias], obj[2], obj[3]);
+            string filename = $"{Environment.CurrentDirectory}\\.rds\\{source.SourceName}{Settings.DataSourceFileExtension}";
+            source.SaveToFile(filename);
+        }
+
         private void modeMask(string[] obj)
         {
             throw new NotImplementedException();
         }
+
+        private void modeSetDelimiter(string[] obj)
+        {
+            //correct usage: rds File -d {filename} {delim}. if -a is given instead of filename
+            //set given delimter for ALL files. filename can be regex pattern
+            if (obj.Length != 4)
+            {
+                Console.Error.WriteLine("Correct usage: rds File -d {filenameRegex | -a} {delim}");
+                return;
+            }
+            string regex;
+            if (obj[2] == "-a" || obj[2] == "All")
+            {
+                regex = ".+";
+            }
+            else
+            {
+                regex = obj[2];
+            }
+            string delim = obj[3];
+            SetDelimiterForFiles(regex, delim);
+        }
+
+        private void ReDetermineColumns(DataFileInfo f)
+        {
+            using (StreamReader reader = new StreamReader(f.Info.FullName))
+            {
+                string firstLine = reader.ReadLine();
+                f.Columns = firstLine.Delimit(f.Delimiter, null);
+            }
+        }
+
         private void Save(DataFileInfo f)
         {
             string ext = Properties.Settings.DataSourceFileExtension;
@@ -136,24 +156,18 @@ namespace RelationalSubsettingLib.Functions
             f.SaveToFile($"{settingsdir}\\{nameWithoutExtension}{ext}");
         }
 
-        private void ReDetermineColumns(DataFileInfo f)
+        private void SetDelimiterForFiles(string regex, string delim)
         {
-            using (StreamReader reader = new StreamReader(f.Info.FullName))
+            var files = GetFilesBasedOnRegex(regex);
+            foreach (var f in files)
             {
-                string firstLine = reader.ReadLine();                
-                f.Columns = firstLine.Delimit(f.Delimiter, null);                
+                Console.Out.WriteLine($"changing delimiter of {f.Info.Name} to {delim}.");
+                f.Delimiter = delim;
+                ReDetermineColumns(f);
+                Save(f);
             }
         }
 
-        private IEnumerable<DataFileInfo> GetFilesBasedOnRegex(string regex)
-        {
-            Regex rg = new Regex(regex);
-            string ext = Properties.Settings.DataSourceFileExtension;
-            DirectoryInfo rdsinfo = new DirectoryInfo($"{Environment.CurrentDirectory}\\.rds");
-            var DataFileInfos = rdsinfo.EnumerateFiles($"*{ext}").
-                Select(x => new DataFileInfo().LoadFromFile(x.FullName)).
-                Where(x => rg.IsMatch(x.Info.Name));
-            return DataFileInfos;
-        }
+        #endregion Private Methods
     }
 }

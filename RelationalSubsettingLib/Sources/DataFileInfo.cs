@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 /// <summary>
 /// Holds info on a position data file like column names, primary-foreign key relationships and which columns to use as

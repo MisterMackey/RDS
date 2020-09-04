@@ -1,16 +1,21 @@
 ﻿using RelationalSubsettingLib.Subsetting;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace RelationalSubsettingLib.Functions
 {
     public class Subset
     {
+        #region Private Fields
+
         private Dictionary<string, Action<string[]>> ModeMapping;
+
+        #endregion Private Fields
+
+        #region Public Constructors
+
         public Subset()
         {
             ModeMapping = new Dictionary<string, Action<string[]>>()
@@ -22,7 +27,9 @@ namespace RelationalSubsettingLib.Functions
             };
         }
 
+        #endregion Public Constructors
 
+        #region Public Methods
 
         public void Run(string[] args)
         {
@@ -41,6 +48,10 @@ namespace RelationalSubsettingLib.Functions
                 Console.Error.WriteLine($"{args[1]} is not recognized as a valid mode for the subset command");
             }
         }
+
+        #endregion Public Methods
+
+        #region Private Methods
 
         private void Create(string[] options)
         {
@@ -65,59 +76,9 @@ namespace RelationalSubsettingLib.Functions
                 ssOptions.TargetPath = path;
                 ssOptions.SaveToFile(settingsFile.FullName);
             }
-                        
+
             Subsetter s = new Subsetter(ssOptions);
             s.CreateSubsetAsync().Wait();
-        }
-
-        private void Setbase(string[] obj)
-        {
-            string settingsFileName = Properties.Settings.RdsSubsettingSettingsFileName;
-            string rdsDir = Properties.Settings.RdsDirectoryName;
-            FileInfo settingsFile = new FileInfo($"{Environment.CurrentDirectory}\\{rdsDir}\\{settingsFileName}");
-            SubsettingOptions options = new SubsettingOptions().LoadFromFile(settingsFile.FullName);
-            if (obj.Length != 4)//usage: subset setbase file column
-            {
-                Console.Error.WriteLine("Incorrect amount of arguments specified. see help for usage");
-                return;
-            }
-            string file = obj[2];
-            string column = obj[3];
-            if (!IsValidInputForSetbase(file, column))
-            {
-                return;
-            }
-            options.BaseColumn = column;
-            options.BaseFileName = file;
-            options.SaveToFile(settingsFile.FullName);
-            Console.Out.WriteLine($"Base set to column {column} in {file}");
-            return;
-
-        }
-
-        private bool IsValidInputForSetbase(string file, string column)
-        {
-            string ext = Properties.Settings.DataSourceFileExtension;
-            string rdsDir = Properties.Settings.RdsDirectoryName;
-            DirectoryInfo rdsdir = new DirectoryInfo($"{Environment.CurrentDirectory}\\{rdsDir}");
-            var datafileinfo = rdsdir.EnumerateFiles(). //all files
-                Where(x => x.Extension.Equals(ext)). //with rds datafileinfo extension
-                Select(x => new DataFileInfo().LoadFromFile(x.FullName)). //select the datafileinfo objects that are loaded from those files
-                Where(x => x.Info.Name.Equals(file)). //where the original name equals the supplied name
-                FirstOrDefault(); //first one or null
-
-            if (datafileinfo == null)
-            {
-                Console.Error.WriteLine($"{file} could not be found in the rds repository");
-                return false;
-            }
-            if (!datafileinfo.Columns.Contains(column))
-            {
-                Console.Error.WriteLine($"{column} could not be found in {file}");
-                return false;
-            }
-            return true;
-
         }
 
         private void Factor(string[] obj)
@@ -150,5 +111,55 @@ namespace RelationalSubsettingLib.Functions
         {
             Console.Out.WriteLine("Usage: rds subset (-create/-factor/-setbase) [path/factor/basefileAndcolumn]");
         }
+
+        private bool IsValidInputForSetbase(string file, string column)
+        {
+            string ext = Properties.Settings.DataSourceFileExtension;
+            string rdsDir = Properties.Settings.RdsDirectoryName;
+            DirectoryInfo rdsdir = new DirectoryInfo($"{Environment.CurrentDirectory}\\{rdsDir}");
+            var datafileinfo = rdsdir.EnumerateFiles(). //all files
+                Where(x => x.Extension.Equals(ext)). //with rds datafileinfo extension
+                Select(x => new DataFileInfo().LoadFromFile(x.FullName)). //select the datafileinfo objects that are loaded from those files
+                Where(x => x.Info.Name.Equals(file)). //where the original name equals the supplied name
+                FirstOrDefault(); //first one or null
+
+            if (datafileinfo == null)
+            {
+                Console.Error.WriteLine($"{file} could not be found in the rds repository");
+                return false;
+            }
+            if (!datafileinfo.Columns.Contains(column))
+            {
+                Console.Error.WriteLine($"{column} could not be found in {file}");
+                return false;
+            }
+            return true;
+        }
+
+        private void Setbase(string[] obj)
+        {
+            string settingsFileName = Properties.Settings.RdsSubsettingSettingsFileName;
+            string rdsDir = Properties.Settings.RdsDirectoryName;
+            FileInfo settingsFile = new FileInfo($"{Environment.CurrentDirectory}\\{rdsDir}\\{settingsFileName}");
+            SubsettingOptions options = new SubsettingOptions().LoadFromFile(settingsFile.FullName);
+            if (obj.Length != 4)//usage: subset setbase file column
+            {
+                Console.Error.WriteLine("Incorrect amount of arguments specified. see help for usage");
+                return;
+            }
+            string file = obj[2];
+            string column = obj[3];
+            if (!IsValidInputForSetbase(file, column))
+            {
+                return;
+            }
+            options.BaseColumn = column;
+            options.BaseFileName = file;
+            options.SaveToFile(settingsFile.FullName);
+            Console.Out.WriteLine($"Base set to column {column} in {file}");
+            return;
+        }
+
+        #endregion Private Methods
     }
 }

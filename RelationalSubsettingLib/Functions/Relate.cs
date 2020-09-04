@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace RelationalSubsettingLib.Functions
 {
     public class Relate
     {
+        #region Public Methods
+
         public void Run(string primaryFile, string primaryKey, string foreignFile, string foreignKey)
         {
             string keyrelationFileName = Properties.Settings.KeyRelationshipFileName;
@@ -16,7 +17,7 @@ namespace RelationalSubsettingLib.Functions
             string ext = Properties.Settings.DataSourceFileExtension;
             var files = rdsDirInfo.EnumerateFiles().Where(f => f.Extension.Contains(ext));
             List<DataSourceInformation> listOfInformation = new List<DataSourceInformation>();
-            foreach(var file in files)
+            foreach (var file in files)
             {
                 listOfInformation.Add(DataSourceInformation.LoadFromFile(file.FullName));
             }
@@ -47,7 +48,7 @@ namespace RelationalSubsettingLib.Functions
                 Console.Error.WriteLine($"{foreignFile} was found but does not contain column {foreignKey}.");
             }
 
-            if(IsInErrorState)
+            if (IsInErrorState)
             {
                 Console.Error.WriteLine("An error was encountered and the program could not continue");
                 return;
@@ -68,5 +69,7 @@ namespace RelationalSubsettingLib.Functions
             Console.Out.WriteLine($"Relationship set. Primary key: \"{primaryKey}\" in file \"{primaryFile}\". Foreign key: \"{foreignKey}\" in file \"{foreignFile}\"");
             return;
         }
+
+        #endregion Public Methods
     }
 }

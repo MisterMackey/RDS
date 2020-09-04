@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RelationalSubsettingLib.Subsetting
+﻿namespace RelationalSubsettingLib.Subsetting
 {
     public class SubsettingOptions
     {
-        public string TargetPath { get; set; }
-        public string BaseFileName { get; set; }
+        #region Public Properties
+
         public string BaseColumn { get; set; }
+        public string BaseFileName { get; set; }
         public double Factor { get; set; }
+        public string TargetPath { get; set; }
+
+        #endregion Public Properties
     }
 }

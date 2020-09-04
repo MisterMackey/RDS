@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using RelationalSubsettingLib;
+using System;
 using System.Linq;
-using RelationalSubsettingLib;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RelationalDataSubsetting
 {
-    class Program
+    internal class Program
     {
-        static int Main(string[] args)
+        #region Private Methods
+
+        private static int Main(string[] args)
         {
             if (!args.Any())
             {
@@ -24,6 +22,7 @@ namespace RelationalDataSubsetting
             }
             return 0;
         }
-    }
 
+        #endregion Private Methods
+    }
 }

@@ -1,21 +1,20 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using RelationalSubsettingLib.Functions;
 using RelationalSubsettingLib.Sql;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RelationalSubsettingLib.Functions.Tests
 {
     [TestClass()]
     public class ConnectionTests
     {
+        #region Public Methods
+
         [ClassInitialize]
         public static void ClassInit(TestContext testContext)
         {
             ConnectionAliases c = new ConnectionAliases();
             c.Clear();
         }
+
         [TestMethod()]
         public void ConnectionTest()
         {
@@ -45,5 +44,6 @@ namespace RelationalSubsettingLib.Functions.Tests
             Assert.IsFalse(ca.ContainsKey("Test"));
         }
 
+        #endregion Public Methods
     }
 }

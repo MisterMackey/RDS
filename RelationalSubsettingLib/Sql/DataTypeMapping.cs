@@ -1,12 +1,13 @@
 ﻿using RelationalSubsettingLib.Properties;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RelationalSubsettingLib.Sql
 {
     public static class DataTypeMapping
     {
+        #region Public Fields
+
         /// <summary>
         /// Maps from a dotnet type to a sql type (in string form)
         /// </summary>
@@ -23,5 +24,7 @@ namespace RelationalSubsettingLib.Sql
             {typeof(Int64), "BIGINT" },
             {typeof(String), $"VARCHAR({Settings.PrefferedSqlStringLength.ToString()})" }
         };
+
+        #endregion Public Fields
     }
 }

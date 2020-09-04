@@ -1,13 +1,18 @@
 ﻿using RelationalSubsettingLib.Sql;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RelationalSubsettingLib.Functions
 {
     public class Connection
     {
+        #region Private Fields
+
         private Dictionary<string, Action<string, string>> ModeMapping = new Dictionary<string, Action<string, string>>();
+
+        #endregion Private Fields
+
+        #region Public Constructors
 
         public Connection()
         {
@@ -15,6 +20,11 @@ namespace RelationalSubsettingLib.Functions
             ModeMapping.Add("-REMOVE", ModeRemove);
             ModeMapping.Add("-UPDATE", ModeUpdate);
         }
+
+        #endregion Public Constructors
+
+        #region Public Methods
+
         public void Run(string[] obj)
         {
             if (obj.Length == 2 && obj[1].ToUpper() == "-LIST")
@@ -33,6 +43,10 @@ namespace RelationalSubsettingLib.Functions
             ModeMapping[mode](arg1, arg2);
         }
 
+        #endregion Public Methods
+
+        #region Private Methods
+
         private void ModeAdd(string alias, string connectionstring)
         {
             ConnectionAliases al = new ConnectionAliases();
@@ -47,12 +61,23 @@ namespace RelationalSubsettingLib.Functions
             }
             Console.Out.WriteLine($"added alias with name {alias}");
         }
+
+        private void ModeList()
+        {
+            ConnectionAliases al = new ConnectionAliases();
+            foreach (var key in al.Keys)
+            {
+                Console.Out.WriteLine($"AliasName: {key}. Connectionstring: {al[key]}");
+            }
+        }
+
         private void ModeRemove(string alias, string x)
         {
             ConnectionAliases al = new ConnectionAliases();
             al.Remove(alias);
             Console.Out.WriteLine($"removed alias with name {alias}");
         }
+
         private void ModeUpdate(string alias, string connectionstring)
         {
             ConnectionAliases al = new ConnectionAliases();
@@ -64,14 +89,7 @@ namespace RelationalSubsettingLib.Functions
             al[alias] = connectionstring;
             Console.Out.WriteLine($"Key {alias} was updated");
         }
-        private void ModeList()
-        {
-            ConnectionAliases al = new ConnectionAliases();
-            foreach (var key in al.Keys)
-            {
-                Console.Out.WriteLine($"AliasName: {key}. Connectionstring: {al[key]}");
-            }
-        }
-        
+
+        #endregion Private Methods
     }
 }

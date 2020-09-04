@@ -1,34 +1,14 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RelationalSubsettingLib.Properties;
-using RelationalSubsettingLib.Sql;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.Versioning;
-using System.Text;
 
 namespace RelationalSubsettingLib.Sql.Tests
 {
     [TestClass()]
     public class ConnectionAliasesTests
     {
-        [TestInitialize()]
-        public void TestInit()
-        {
-            //ensure there is no pre-existing settings file when a test in this file runs
-            string fname = Settings.ConnectionAliasFileName;
-            string folder = Directory.GetCurrentDirectory() + @"\.rds";
-            string file = folder + "\\" + fname;
-            if (!Directory.Exists(folder))
-            {
-                Directory.CreateDirectory(folder);
-            }
-            if (File.Exists(file))
-            {
-                File.Delete(file);
-            }
-        }
+        #region Public Methods
+
         [TestMethod()]
         public void AddAndGetTest()
         {
@@ -50,7 +30,23 @@ namespace RelationalSubsettingLib.Sql.Tests
             Assert.AreEqual(expected: "new connstring", actual: c["NewKey"]);
         }
 
+        [TestInitialize()]
+        public void TestInit()
+        {
+            //ensure there is no pre-existing settings file when a test in this file runs
+            string fname = Settings.ConnectionAliasFileName;
+            string folder = Directory.GetCurrentDirectory() + @"\.rds";
+            string file = folder + "\\" + fname;
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+            if (File.Exists(file))
+            {
+                File.Delete(file);
+            }
+        }
 
-
+        #endregion Public Methods
     }
 }

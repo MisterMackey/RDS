@@ -3,12 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace RelationalSubsettingLib.Functions
 {
     public class Init
     {
+        #region Public Methods
+
         public void Run()
         {
             string[] extensionWhiteList = new string[]
@@ -32,7 +33,7 @@ namespace RelationalSubsettingLib.Functions
             {
                 Console.Out.WriteLine($"Found file {f.Name}");
                 DataFileInfo df = new DataFileInfo(f);
-                int idx = f.Name.LastIndexOf('.') ;
+                int idx = f.Name.LastIndexOf('.');
                 string nameWithoutExtension = f.Name.Substring(0, idx);
                 df.SaveToFile($"{settingsdir.FullName}\\{nameWithoutExtension}{ext}");
             }
@@ -43,5 +44,7 @@ namespace RelationalSubsettingLib.Functions
             Directory.CreateDirectory(subsettingOptions.TargetPath);
             subsettingOptions.SaveToFile($"{settingsdir.FullName}\\{settingsFileName}");
         }
+
+        #endregion Public Methods
     }
 }

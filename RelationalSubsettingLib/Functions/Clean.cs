@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace RelationalSubsettingLib.Functions
 {
     public class Clean
     {
+        #region Public Methods
+
         public void Run()
         {
             string path = Environment.CurrentDirectory + "//.rds";
@@ -19,7 +19,8 @@ namespace RelationalSubsettingLib.Functions
             directoryInfo.Delete(true);
             Console.Out.WriteLine("Repository cleaned up");
             return;
-
         }
+
+        #endregion Public Methods
     }
 }

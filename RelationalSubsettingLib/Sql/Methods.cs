@@ -1,16 +1,15 @@
-﻿using D2S.Library.Loaders;
-using D2S.Library.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using D2S.Library.Utilities;
 
 namespace RelationalSubsettingLib.Sql
 {
     public static class Methods
     {
-        static void CreateTable(PipelineContext c)
-        {
+        #region Private Methods
 
+        private static void CreateTable(PipelineContext c)
+        {
         }
+
+        #endregion Private Methods
     }
 }

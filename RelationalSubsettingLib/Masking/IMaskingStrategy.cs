@@ -1,14 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Text;
 
 namespace RelationalSubsettingLib.Masking
 {
     public interface IMaskingStrategy
     {
-        void Initialize(DataTable table, string columnName);
+        #region Public Properties
 
         Action<DataRow> ParallelMaskingAction { get; }
+
+        #endregion Public Properties
+
+        #region Public Methods
+
+        void Initialize(DataTable table, string columnName);
+
+        #endregion Public Methods
     }
 }

@@ -1,15 +1,14 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using RelationalSubsettingLib;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace RelationalSubsettingLib.Tests
 {
     [TestClass()]
     public class DataFileInfoTests
     {
+        #region Public Methods
+
         [TestMethod()]
         public void SerializeAndDeSerializeAsBaseClass()
         {
@@ -41,6 +40,6 @@ namespace RelationalSubsettingLib.Tests
             }
         }
 
-
+        #endregion Public Methods
     }
 }

@@ -11,8 +11,7 @@ namespace RelationalSubsettingLib.Masking
     /// </summary>
     public class ReplaceMaskingStrategy : IMaskingStrategy
     {
-        private string ReplaceValue;
-        private string ColumnName;
+        #region Public Properties
 
         public Action<DataRow> ParallelMaskingAction
         {
@@ -22,6 +21,30 @@ namespace RelationalSubsettingLib.Masking
                 return LeAction;
             }
         }
+
+        #endregion Public Properties
+
+        #region Private Fields
+
+        private string ColumnName;
+        private string ReplaceValue;
+
+        #endregion Private Fields
+
+        #region Public Constructors
+
+        public ReplaceMaskingStrategy()
+        {
+        }
+
+        public ReplaceMaskingStrategy(string ReplaceValue) : this()
+        {
+            this.ReplaceValue = ReplaceValue;
+        }
+
+        #endregion Public Constructors
+
+        #region Public Methods
 
         public void Initialize(DataTable table, string columnName)
         {
@@ -36,13 +59,13 @@ namespace RelationalSubsettingLib.Masking
             }
         }
 
-        public ReplaceMaskingStrategy()
-        {
-        }
+        #endregion Public Methods
 
-        public ReplaceMaskingStrategy(string ReplaceValue) : this()
+        #region Private Methods
+
+        private void LeAction(DataRow row)
         {
-            this.ReplaceValue = ReplaceValue;
+            row[ColumnName] = ReplaceValue;
         }
 
         private void ValidateBeforeReturningAction()
@@ -53,9 +76,6 @@ namespace RelationalSubsettingLib.Masking
             }
         }
 
-        private void LeAction(DataRow row)
-        {
-            row[ColumnName] = ReplaceValue;
-        }
+        #endregion Private Methods
     }
 }

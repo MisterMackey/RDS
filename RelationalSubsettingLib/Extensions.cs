@@ -1,51 +1,182 @@
 ﻿using CsvHelper;
+using D2S.Library.Services;
+using D2S.Library.Utilities;
 using Newtonsoft.Json;
+using RelationalSubsettingLib.Sql;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Data.SqlTypes;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using D2S.Library.Utilities;
-using D2S.Library.Services;
-using D2S.Library.Pipelines;
-using RelationalSubsettingLib.Sql;
 
 namespace RelationalSubsettingLib
 {
     public static class Extensions
     {
+        #region Public Methods
+
         /// <summary>
         /// splits a string, auto-detects delimiters. doesn't use qualifier
         /// </summary>
-        /// <param name="str"></param>
-        /// <returns></returns>
+        /// <param name="str">
+        /// </param>
+        /// <returns>
+        /// </returns>
         public static string[] Delimit(this string str)
         {
             string del = DetectDelimiter(str);
-            return SplitRow(str,del,null,true);
+            return SplitRow(str, del, null, true);
         }
+
         /// <summary>
         /// splits a string based on supplied qualifier and delimiter.
         /// </summary>
-        /// <param name="str"></param>
-        /// <param name="del"></param>
-        /// <param name="qual"></param>
-        /// <returns></returns>
+        /// <param name="str">
+        /// </param>
+        /// <param name="del">
+        /// </param>
+        /// <param name="qual">
+        /// </param>
+        /// <returns>
+        /// </returns>
         public static string[] Delimit(this string str, string del, string qual)
         {
-            
             return SplitRow(str, del, qual, true);
         }
 
-        public static void SaveToFile<T>(this T val, string filePath)
+        public static string DetectDelimiter(string str)
         {
-            string txt = JsonConvert.SerializeObject(val, Formatting.Indented);
-            File.WriteAllText(filePath, txt);
+            Console.Out.WriteLine("warn, delimiter detection not yet implemented");
+            return "|";
         }
+
+        public static void ExportToDelimitedText(this DataTable source, string path, string delimiter)
+        {
+            using (var writer = new StreamWriter(path))
+            {
+                using (var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                {
+                    csvWriter.Configuration.Delimiter = delimiter;
+                    foreach (DataColumn c in source.Columns)
+                    {
+                        csvWriter.WriteField(c.ColumnName);
+                    }
+                    foreach (DataRow r in source.Rows)
+                    {
+                        csvWriter.NextRecord();
+                        for (int i = 0; i < source.Columns.Count; i++)
+                        {
+                            csvWriter.WriteField(r[i].ToString());
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void ExportToDelimitedText(this IEnumerable<DataRow> source, string path, string delimiter, DataColumnCollection header)
+        {
+            using (var writer = new StreamWriter(path))
+            {
+                using (var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                {
+                    csvWriter.Configuration.Delimiter = delimiter;
+                    foreach (DataColumn c in header)
+                    {
+                        csvWriter.WriteField(c.ColumnName);
+                    }
+                    csvWriter.NextRecord();
+                    foreach (DataRow r in source)
+                    {
+                        for (int i = 0; i < header.Count; i++)
+                        {
+                            csvWriter.WriteField(r[i].ToString());
+                        }
+                        csvWriter.NextRecord();
+                    }
+                }
+            }
+        }
+
+        public static void ExportToSqlTable(this IEnumerable<DataRow> source, DataColumnCollection header, string connectionString, string schemaAndTable, bool AppendIfTableExists = false, bool RecreateIfTableExists = true)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                //does table exist?
+                bool tableExists = DoesTableExist(schemaAndTable, conn);
+                //error if append is not allowed and table exists
+                if (tableExists && !AppendIfTableExists)
+                {
+                    if (!RecreateIfTableExists)
+                    {
+                        Console.Error.WriteLine($"{schemaAndTable} already exists and appending/recreating is set to false");
+                        return;
+                    }
+                    else
+                    {
+                        CreateOrRecreateTargetTable(header, connectionString, schemaAndTable);
+                    }
+                }
+                if (!tableExists)
+                {
+                    CreateOrRecreateTargetTable(header, connectionString, schemaAndTable);
+                }
+                //fill table
+                using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
+                {
+                    bulk.BatchSize = 10000;
+                    bulk.DestinationTableName = schemaAndTable;
+                    bulk.WriteToServer(rows: source.ToArray());
+                }
+            }
+        }
+
+        public static void ExportToSqlTable(this DataTable source, string connectionString, string schemaAndTable, bool AppendIfTableExists = false)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                //does table exist?
+                bool tableExists = DoesTableExist(schemaAndTable, conn);
+                //error if append is not allowed and table exists
+                if (tableExists && !AppendIfTableExists)
+                {
+                    Console.Error.WriteLine($"{schemaAndTable} already exists and appending is set to false");
+                    return;
+                }
+                if (!tableExists)
+                {
+                    //create table if it doesn't exist
+                    string[] cols = new string[source.Columns.Count];
+                    string[] datatypes = new string[source.Columns.Count];
+                    for (int i = 0; i < source.Columns.Count; i++)
+                    {
+                        cols[i] = source.Columns[i].ColumnName;
+                        datatypes[i] = DataTypeMapping.SystemToSql[source.Columns[i].DataType];
+                    }
+                    DestinationTableCreator dtc = new DestinationTableCreator(schemaAndTable, cols, datatypes);
+                    //using d2s class for this
+                    ConfigVariables.Instance.ConfiguredConnection = connectionString; //this is where the d2s class get their connstring from
+                    dtc.CreateTable();
+                }
+                //fill table
+                using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
+                {
+                    bulk.BatchSize = 10000;
+                    bulk.DestinationTableName = schemaAndTable;
+                    bulk.WriteToServer(source);
+                }
+            }
+        }
+
+        public static bool InList(this string value, string[] list)
+        {
+            return !value.NotInList(list);
+        }
+
         public static T LoadFromFile<T>(this T val, string filePath)
         {
             string txt = File.ReadAllText(filePath);
@@ -62,22 +193,44 @@ namespace RelationalSubsettingLib
             else return true;
         }
 
-        public static bool InList(this string value, string[] list)
+        public static void SaveToFile<T>(this T val, string filePath)
         {
-            return !value.NotInList(list);
+            string txt = JsonConvert.SerializeObject(val, Formatting.Indented);
+            File.WriteAllText(filePath, txt);
         }
+
+        //https://stackoverflow.com/questions/1287567/is-using-random-and-orderby-a-good-shuffle-algorithm
+        //thank you Jon Skeet ;)
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Random rng)
+        {
+            T[] elements = source.ToArray();
+            for (int i = elements.Length - 1; i >= 0; i--)
+            {
+                // Swap element "i" with a random earlier element it (or itself) ... except we don't really need to swap
+                // it fully, as we can return it immediately, and afterwards it's irrelevant.
+                int swapIndex = rng.Next(i + 1);
+                yield return elements[swapIndex];
+                elements[swapIndex] = elements[i];
+            }
+        }
+
         /// <summary>
-        /// Split strings while preserving possible delimiter characters inside the strings
-        /// (this function performace is better than using regular expressions)
+        /// Split strings while preserving possible delimiter characters inside the strings (this function performace is
+        /// better than using regular expressions)
         /// <para>
         /// https://stackoverflow.com/questions/3776458/split-a-comma-separated-string-with-both-quoted-and-unquoted-strings
         /// </para>
         /// </summary>
-        /// <param name="record"></param>
-        /// <param name="delimiter"></param>
-        /// <param name="qualifier"></param>
-        /// <param name="trimData"></param>
-        /// <returns></returns>
+        /// <param name="record">
+        /// </param>
+        /// <param name="delimiter">
+        /// </param>
+        /// <param name="qualifier">
+        /// </param>
+        /// <param name="trimData">
+        /// </param>
+        /// <returns>
+        /// </returns>
         public static string[] SplitRow(string record, string delimiter, string qualifier, bool trimData)
         {
             //call the version that isn't checking for qualifiers (save the anima- i mean CPU cycles!!)
@@ -118,7 +271,8 @@ namespace RelationalSubsettingLib
                 // A delimiter character...
                 if (row[idx] == delimiter[0])
                 {
-                    // Are we inside qualifier? If not and we use a single char delimiter we are done with this field. otherwise peek ahead and check if the full delimiter is encountered.
+                    // Are we inside qualifier? If not and we use a single char delimiter we are done with this field.
+                    // otherwise peek ahead and check if the full delimiter is encountered.
                     if (!inQualifier)
                     {
                         bool delimiterMatch = true;
@@ -165,7 +319,6 @@ namespace RelationalSubsettingLib
                                 inQualifier = false;
                                 continue;
                             }
-
                             else
                             {
                                 // ...Qualifier is opening qualifier
@@ -205,16 +358,60 @@ namespace RelationalSubsettingLib
             return results.ToArray(); // .ToArray<string>();
         }
 
+        #endregion Public Methods
+
+        #region Private Methods
+
+        private static void CreateOrRecreateTargetTable(DataColumnCollection header, string connectionString, string schemaAndTable)
+        {
+            //drop (if exists) and recreate
+            string[] cols = new string[header.Count];
+            string[] datatypes = new string[header.Count];
+            for (int i = 0; i < header.Count; i++)
+            {
+                cols[i] = header[i].ColumnName;
+                datatypes[i] = DataTypeMapping.SystemToSql[header[i].DataType];
+            }
+            DestinationTableCreator dtc = new DestinationTableCreator(schemaAndTable, cols, datatypes);
+            //using d2s class for this
+            ConfigVariables.Instance.ConfiguredConnection = connectionString; //this is where the d2s class get their connstring from
+            DestinationTableDropper dtd = new DestinationTableDropper(schemaAndTable);
+            dtd.DropTable();
+            dtc.CreateTable();
+        }
+
+        private static bool DoesTableExist(string schemaAndTable, SqlConnection conn)
+        {
+            bool tableExists;
+            using (SqlCommand comm = new SqlCommand())
+            {
+                comm.Connection = conn;
+                comm.CommandText = "select object_id(@object)";
+                comm.Parameters.AddWithValue("@object", schemaAndTable);
+                comm.Parameters[0].DbType = DbType.String;
+                comm.Parameters[0].Size = 1000;
+                comm.Prepare();
+                var retValue = comm.ExecuteScalar();
+                tableExists = retValue != DBNull.Value;
+            }
+
+            return tableExists;
+        }
+
         /// <summary>
-        /// same as the other splitrow but it doesn't have the qualifier checking bit. Called from the other one when quali is set to null in the args.
+        /// same as the other splitrow but it doesn't have the qualifier checking bit. Called from the other one when
+        /// quali is set to null in the args.
         /// </summary>
-        /// <param name="record"></param>
-        /// <param name="delimiter"></param>
-        /// <param name="trimData"></param>
-        /// <returns></returns>
+        /// <param name="record">
+        /// </param>
+        /// <param name="delimiter">
+        /// </param>
+        /// <param name="trimData">
+        /// </param>
+        /// <returns>
+        /// </returns>
         private static string[] SplitRow(string record, string delimiter, bool trimData)
         {
-
             var results = new List<string>();
             var result = new StringBuilder();
             var inField = false;
@@ -273,185 +470,8 @@ namespace RelationalSubsettingLib
             }
 
             return results.ToArray();
-
         }
 
-        public static string DetectDelimiter(string str)
-        {
-            Console.Out.WriteLine("warn, delimiter detection not yet implemented");
-            return "|";
-        }
-
-        //https://stackoverflow.com/questions/1287567/is-using-random-and-orderby-a-good-shuffle-algorithm
-        //thank you Jon Skeet ;)
-        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Random rng)
-        {
-            T[] elements = source.ToArray();
-            for (int i = elements.Length - 1; i >= 0; i--)
-            {
-                // Swap element "i" with a random earlier element it (or itself)
-                // ... except we don't really need to swap it fully, as we can
-                // return it immediately, and afterwards it's irrelevant.
-                int swapIndex = rng.Next(i + 1);
-                yield return elements[swapIndex];
-                elements[swapIndex] = elements[i];
-            }
-        }
-
-        public static void ExportToDelimitedText(this DataTable source, string path, string delimiter)
-        {
-            using (var writer = new StreamWriter(path))
-            {
-                using (var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture))
-                {
-                    csvWriter.Configuration.Delimiter = delimiter;
-                    foreach (DataColumn c in source.Columns)
-                    {
-                        csvWriter.WriteField(c.ColumnName);
-                    }
-                    foreach (DataRow r in source.Rows)
-                    {
-                        csvWriter.NextRecord();
-                        for (int i = 0; i < source.Columns.Count; i++)
-                        {
-                            csvWriter.WriteField(r[i].ToString());
-                        }
-                    }
-                }
-            }
-        }
-        public static void ExportToDelimitedText(this IEnumerable<DataRow> source, string path, string delimiter, DataColumnCollection header)
-        {
-            using (var writer = new StreamWriter(path))
-            {
-                using (var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture))
-                {
-                    csvWriter.Configuration.Delimiter = delimiter;
-                    foreach (DataColumn c in header)
-                    {
-                        csvWriter.WriteField(c.ColumnName);
-                    }
-                    csvWriter.NextRecord();
-                    foreach (DataRow r in source)
-                    {
-                        for (int i = 0; i < header.Count; i++)
-                        {
-                            csvWriter.WriteField(r[i].ToString());
-                        }
-                        csvWriter.NextRecord();
-                    }
-                }
-            }
-        }
-
-        public static void ExportToSqlTable(this IEnumerable<DataRow> source, DataColumnCollection header, string connectionString, string schemaAndTable, bool AppendIfTableExists = false, bool RecreateIfTableExists = true)
-        {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.Open();
-                //does table exist?
-                bool tableExists = DoesTableExist(schemaAndTable, conn);
-                //error if append is not allowed and table exists
-                if (tableExists && !AppendIfTableExists)
-                {
-                    if (!RecreateIfTableExists)
-                    {
-                        Console.Error.WriteLine($"{schemaAndTable} already exists and appending/recreating is set to false");
-                        return;
-                    }
-                    else
-                    {
-                        CreateOrRecreateTargetTable(header, connectionString, schemaAndTable);
-                    }
-                }
-                if (!tableExists)
-                {
-                    CreateOrRecreateTargetTable(header, connectionString, schemaAndTable);
-                }
-                //fill table
-                using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
-                {
-                    bulk.BatchSize = 10000;
-                    bulk.DestinationTableName = schemaAndTable;
-                    bulk.WriteToServer(rows: source.ToArray());
-                }
-
-            }
-        }
-
-        private static void CreateOrRecreateTargetTable(DataColumnCollection header, string connectionString, string schemaAndTable)
-        {
-            //drop (if exists) and recreate
-            string[] cols = new string[header.Count];
-            string[] datatypes = new string[header.Count];
-            for (int i = 0; i < header.Count; i++)
-            {
-                cols[i] = header[i].ColumnName;
-                datatypes[i] = DataTypeMapping.SystemToSql[header[i].DataType];
-            }
-            DestinationTableCreator dtc = new DestinationTableCreator(schemaAndTable, cols, datatypes);
-            //using d2s class for this
-            ConfigVariables.Instance.ConfiguredConnection = connectionString; //this is where the d2s class get their connstring from
-            DestinationTableDropper dtd = new DestinationTableDropper(schemaAndTable);
-            dtd.DropTable();
-            dtc.CreateTable();
-        }
-
-        public static void ExportToSqlTable(this DataTable source, string connectionString, string schemaAndTable, bool AppendIfTableExists = false)
-        {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.Open();
-                //does table exist?
-                bool tableExists = DoesTableExist(schemaAndTable, conn);
-                //error if append is not allowed and table exists
-                if (tableExists && !AppendIfTableExists)
-                {
-                    Console.Error.WriteLine($"{schemaAndTable} already exists and appending is set to false");
-                    return;
-                }
-                if (!tableExists)
-                {
-                    //create table if it doesn't exist
-                    string[] cols = new string[source.Columns.Count];
-                    string[] datatypes = new string[source.Columns.Count];
-                    for (int i = 0; i < source.Columns.Count; i++)
-                    {
-                        cols[i] = source.Columns[i].ColumnName;
-                        datatypes[i] = DataTypeMapping.SystemToSql[source.Columns[i].DataType];
-                    }
-                    DestinationTableCreator dtc = new DestinationTableCreator(schemaAndTable, cols, datatypes);
-                    //using d2s class for this
-                    ConfigVariables.Instance.ConfiguredConnection = connectionString; //this is where the d2s class get their connstring from
-                    dtc.CreateTable();
-                }
-                //fill table
-                using (SqlBulkCopy bulk = new SqlBulkCopy(conn))
-                {
-                    bulk.BatchSize = 10000;
-                    bulk.DestinationTableName = schemaAndTable;
-                    bulk.WriteToServer(source);
-                }
-
-            }
-        }
-        private static bool DoesTableExist(string schemaAndTable, SqlConnection conn)
-        {
-            bool tableExists;
-            using (SqlCommand comm = new SqlCommand())
-            {
-                comm.Connection = conn;
-                comm.CommandText = "select object_id(@object)";
-                comm.Parameters.AddWithValue("@object", schemaAndTable);
-                comm.Parameters[0].DbType = DbType.String;
-                comm.Parameters[0].Size = 1000;
-                comm.Prepare();
-                var retValue = comm.ExecuteScalar();
-                tableExists = retValue != DBNull.Value;
-            }
-
-            return tableExists;
-        }
-
+        #endregion Private Methods
     }
 }

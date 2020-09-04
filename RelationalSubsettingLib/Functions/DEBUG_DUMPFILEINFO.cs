@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace RelationalSubsettingLib.Functions
 {
     public class DEBUG_DUMPFILEINFO
     {
+        #region Public Methods
+
         public void Run()
         {
             DirectoryInfo rds = new DirectoryInfo(Environment.CurrentDirectory + "\\.rds");
@@ -20,6 +20,7 @@ namespace RelationalSubsettingLib.Functions
                 Console.Out.WriteLine(text);
             }
         }
-        
+
+        #endregion Public Methods
     }
 }

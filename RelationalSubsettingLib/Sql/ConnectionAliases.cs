@@ -1,48 +1,37 @@
-﻿using Newtonsoft.Json;
-using RelationalSubsettingLib.Properties;
-using System;
+﻿using RelationalSubsettingLib.Properties;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace RelationalSubsettingLib.Sql
 {
-    public class ConnectionAliases : IDictionary<string,string>
+    public class ConnectionAliases : IDictionary<string, string>
     {
+        #region Public Properties
+
+        public int Count => ((IDictionary<string, string>)m_Aliases).Count;
+        public bool IsReadOnly => ((IDictionary<string, string>)m_Aliases).IsReadOnly;
+        public ICollection<string> Keys => ((IDictionary<string, string>)m_Aliases).Keys;
+        public ICollection<string> Values => ((IDictionary<string, string>)m_Aliases).Values;
+
+        #endregion Public Properties
+
+        #region Private Fields
+
         private Dictionary<string, string> m_Aliases;
+
+        #endregion Private Fields
+
+        #region Public Constructors
 
         public ConnectionAliases()
         {
             ReadFile();
         }
 
-        #region interface
-        public string this[string key]
-        {
-            get
-            {
-                if (m_Aliases == null)
-                {
-                    ReadFile();
-                }
-                return m_Aliases[key];
-            }
-            set
-            {
-                m_Aliases[key] = value;
-                RefreshFile();
-            }
-        }
-        public ICollection<string> Keys => ((IDictionary<string, string>)m_Aliases).Keys;
+        #endregion Public Constructors
 
-        public ICollection<string> Values => ((IDictionary<string, string>)m_Aliases).Values;
-
-        public int Count => ((IDictionary<string, string>)m_Aliases).Count;
-
-        public bool IsReadOnly => ((IDictionary<string, string>)m_Aliases).IsReadOnly;
+        #region Public Methods
 
         public void Add(string key, string value)
         {
@@ -82,6 +71,11 @@ namespace RelationalSubsettingLib.Sql
             return ((IDictionary<string, string>)m_Aliases).GetEnumerator();
         }
 
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IDictionary<string, string>)m_Aliases).GetEnumerator();
+        }
+
         public bool Remove(string key)
         {
             var r = ((IDictionary<string, string>)m_Aliases).Remove(key);
@@ -101,29 +95,50 @@ namespace RelationalSubsettingLib.Sql
             return ((IDictionary<string, string>)m_Aliases).TryGetValue(key, out value);
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IDictionary<string, string>)m_Aliases).GetEnumerator();
-        }
+        #endregion Public Methods
 
-        #endregion
+        #region Private Methods
 
         private void ReadFile()
         {
             string path = $"{Directory.GetCurrentDirectory()}\\.rds\\{Settings.ConnectionAliasFileName}";
             if (File.Exists(path))
             {
-                m_Aliases = m_Aliases.LoadFromFile(path); 
+                m_Aliases = m_Aliases.LoadFromFile(path);
             }
             else
             {
                 m_Aliases = new Dictionary<string, string>();
             }
         }
+
         private void RefreshFile()
         {
             string path = $"{Directory.GetCurrentDirectory()}\\.rds\\{Settings.ConnectionAliasFileName}";
             m_Aliases.SaveToFile(path);
         }
+
+        #endregion Private Methods
+
+        #region Public Indexers
+
+        public string this[string key]
+        {
+            get
+            {
+                if (m_Aliases == null)
+                {
+                    ReadFile();
+                }
+                return m_Aliases[key];
+            }
+            set
+            {
+                m_Aliases[key] = value;
+                RefreshFile();
+            }
+        }
+
+        #endregion Public Indexers
     }
 }

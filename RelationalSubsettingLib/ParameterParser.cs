@@ -4,13 +4,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace RelationalSubsettingLib
 {
     public class ParameterParser
     {
-        private Dictionary<string, Action<string[]>> ParameterMapping; 
+        #region Private Fields
+
+        private Dictionary<string, Action<string[]>> ParameterMapping;
+
+        #endregion Private Fields
+
+        #region Public Constructors
 
         public ParameterParser()
         {
@@ -31,6 +36,9 @@ namespace RelationalSubsettingLib
             };
         }
 
+        #endregion Public Constructors
+
+        #region Public Methods
 
         public void ParseArgument(string[] args)
         {
@@ -59,17 +67,26 @@ namespace RelationalSubsettingLib
             }
         }
 
+        #endregion Public Methods
 
-        #region params
-        private static void paramHELP(string[] inf)
+        #region Private Methods
+
+        private static void paramCLEAN(string[] obj)
         {
-            Help help = new Help();
-            help.Run();
+            Clean clean = new Clean();
+            clean.Run();
         }
+
         private static void paramDEBUG_CURRENTDIR(string[] inf)
         {
             DEBUG_Currentdir dir = new DEBUG_Currentdir();
             dir.Run();
+        }
+
+        private static void paramHELP(string[] inf)
+        {
+            Help help = new Help();
+            help.Run();
         }
 
         private static void paramINIT(string[] obj)
@@ -78,11 +95,12 @@ namespace RelationalSubsettingLib
             init.Run();
         }
 
-        private static void paramCLEAN(string[] obj)
+        [RequiresInitializedRepository()]
+        private static void paramLIST(string[] obj)
         {
-            Clean clean = new Clean();
-            clean.Run();
+            throw new NotImplementedException();
         }
+
         [RequiresInitializedRepository()]
         private static void paramRELATE(string[] args)
         {
@@ -96,81 +114,13 @@ namespace RelationalSubsettingLib
                 r.Run(args[1], args[2], args[3], args[4]);
             }
         }
+
         [RequiresInitializedRepository()]
         private static void paramSTATUS(string[] obj)
         {
             throw new NotImplementedException();
         }
-        [RequiresInitializedRepository()]
-        private static void paramLIST(string[] obj)
-        {
-            throw new NotImplementedException();
-        }
-        [RequiresInitializedRepository()]
-        private void paramDEBUG_DUMPFILEINFO(string[] obj)
-        {
-            DEBUG_DUMPFILEINFO d = new DEBUG_DUMPFILEINFO();
-            d.Run();
-        }
-        [RequiresInitializedRepository()]
-        private void paramDEBUG_DUMPRELATIONINFO(string[] obj)
-        {
-            DEBUG_DUMPRELATIONINFO d = new DEBUG_DUMPRELATIONINFO();
-            d.Run();
-        }
 
-
-        [RequiresInitializedRepository()
-            ,ValidOptions(CommandOptions.Create)
-            ,ValidOptions(CommandOptions.Factor)
-            ,ValidOptions(CommandOptions.SetBase)
-            ,ValidOptions(CommandOptions.Help)]
-        private void paramSUBSET(string[] obj)
-        {
-            Subset s = new Subset();
-            s.Run(obj);
-        }
-
-        [RequiresInitializedRepository(),
-            ValidOptions(CommandOptions.d),
-            ValidOptions(CommandOptions.SetDelimiter),
-            ValidOptions(CommandOptions.a),
-            ValidOptions(CommandOptions.All),
-            ValidOptions(CommandOptions.AddFile),
-            ValidOptions(CommandOptions.AddTable)]
-        private void paramFILE(string[] obj)
-        {
-            RdsFile rdsFile = new RdsFile();
-            rdsFile.Run(obj);
-        }
-        [RequiresInitializedRepository(),
-            ValidOptions(CommandOptions.Add),
-            ValidOptions(CommandOptions.Remove),
-            ValidOptions(CommandOptions.Update),
-            ValidOptions(CommandOptions.List)]
-        private void paramCONNECTION(string[] obj)
-        {
-            Connection c = new Connection();
-            c.Run(obj);
-        }
-
-
-        #endregion
-
-        private bool IsValidRepositoryState(MethodInfo method)
-        {
-            var attributes = method.CustomAttributes;
-            if (attributes.Any(
-                att => att.AttributeType == typeof(RequiresInitializedRepositoryAttribute)))
-            {
-                return IsInitialized();
-            }
-            else
-            {
-                return true;
-            }
-            
-        }
         private bool IsInitialized()
         {
             return Directory.Exists($"{Environment.CurrentDirectory}\\.rds");
@@ -178,7 +128,7 @@ namespace RelationalSubsettingLib
 
         private bool IsValidOptions(MethodInfo method, string[] args)
         {
-            IEnumerable<ValidOptionsAttribute> validOptionsAttributes = (IEnumerable < ValidOptionsAttribute >) method.GetCustomAttributes(typeof(ValidOptionsAttribute));
+            IEnumerable<ValidOptionsAttribute> validOptionsAttributes = (IEnumerable<ValidOptionsAttribute>)method.GetCustomAttributes(typeof(ValidOptionsAttribute));
             var validOptions = validOptionsAttributes.Select(x => x.ValidOptions);
             IEnumerable<string> passedOptions = args.Where(x => x.StartsWith("-"));
             foreach (string passedOption in passedOptions)
@@ -205,7 +155,70 @@ namespace RelationalSubsettingLib
             }
             return true;
         }
+
+        private bool IsValidRepositoryState(MethodInfo method)
+        {
+            var attributes = method.CustomAttributes;
+            if (attributes.Any(
+                att => att.AttributeType == typeof(RequiresInitializedRepositoryAttribute)))
+            {
+                return IsInitialized();
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        [RequiresInitializedRepository(),
+            ValidOptions(CommandOptions.Add),
+            ValidOptions(CommandOptions.Remove),
+            ValidOptions(CommandOptions.Update),
+            ValidOptions(CommandOptions.List)]
+        private void paramCONNECTION(string[] obj)
+        {
+            Connection c = new Connection();
+            c.Run(obj);
+        }
+
+        [RequiresInitializedRepository()]
+        private void paramDEBUG_DUMPFILEINFO(string[] obj)
+        {
+            DEBUG_DUMPFILEINFO d = new DEBUG_DUMPFILEINFO();
+            d.Run();
+        }
+
+        [RequiresInitializedRepository()]
+        private void paramDEBUG_DUMPRELATIONINFO(string[] obj)
+        {
+            DEBUG_DUMPRELATIONINFO d = new DEBUG_DUMPRELATIONINFO();
+            d.Run();
+        }
+
+        [RequiresInitializedRepository(),
+            ValidOptions(CommandOptions.d),
+            ValidOptions(CommandOptions.SetDelimiter),
+            ValidOptions(CommandOptions.a),
+            ValidOptions(CommandOptions.All),
+            ValidOptions(CommandOptions.AddFile),
+            ValidOptions(CommandOptions.AddTable)]
+        private void paramFILE(string[] obj)
+        {
+            RdsFile rdsFile = new RdsFile();
+            rdsFile.Run(obj);
+        }
+
+        [RequiresInitializedRepository()
+                    , ValidOptions(CommandOptions.Create)
+            , ValidOptions(CommandOptions.Factor)
+            , ValidOptions(CommandOptions.SetBase)
+            , ValidOptions(CommandOptions.Help)]
+        private void paramSUBSET(string[] obj)
+        {
+            Subset s = new Subset();
+            s.Run(obj);
+        }
+
+        #endregion Private Methods
     }
-
 }
-

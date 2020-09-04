@@ -1,16 +1,14 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using RelationalSubsettingLib.Masking;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
-using System.Text;
 
 namespace RelationalSubsettingLib.Masking.Tests
 {
     [TestClass()]
     public class ReplaceMaskingStrategyTests
     {
+        #region Public Methods
+
         [TestMethod()]
         public void InitializeTest()
         {
@@ -22,7 +20,6 @@ namespace RelationalSubsettingLib.Masking.Tests
                 () => r.Initialize(dt, "B"));
             r.Initialize(dt, "A");
         }
-
 
         [TestMethod()]
         public void ParallelMaskingActionTest()
@@ -45,7 +42,8 @@ namespace RelationalSubsettingLib.Masking.Tests
             Assert.IsTrue("Y".Equals(dt.Rows[0]["A"]));
             x.Invoke(dt.Rows[0]);
             Assert.IsTrue("x".Equals(dt.Rows[0]["A"]));
-
         }
+
+        #endregion Public Methods
     }
 }
