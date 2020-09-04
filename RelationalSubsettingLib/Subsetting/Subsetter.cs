@@ -1,5 +1,6 @@
 ﻿using CsvHelper;
 using Newtonsoft.Json;
+using RelationalSubsettingLib.Masking;
 using RelationalSubsettingLib.Sources;
 using System;
 using System.Collections.Generic;
@@ -82,11 +83,6 @@ namespace RelationalSubsettingLib.Subsetting
             return sel;
         }
 
-        private void __CreateSubsetSourceTableInfo(IEnumerable<DataRow> dt, SourceTableInfo info, DataColumnCollection header)
-        {
-            dt.ExportToSqlTable(header, info.ConnectionString, $"{info.SchemaName}.{info.TableName}_Subeset", AppendIfTableExists: false);
-        }
-
         private void _CreateSubset(DataTable dt, DataSourceInformation info)
         {
             if (info.GetType() == typeof(DataFileInfo))
@@ -111,7 +107,7 @@ namespace RelationalSubsettingLib.Subsetting
             if (info.GetType() == typeof(SourceTableInfo))
             {
                 SourceTableInfo stinfo = info as SourceTableInfo;
-                __CreateSubsetSourceTableInfo(dt, stinfo, header);
+                _CreateSubsetSourceTableInfo(dt, stinfo, header);
             }
         }
 
@@ -145,6 +141,11 @@ namespace RelationalSubsettingLib.Subsetting
             dt.ExportToSqlTable(info.ConnectionString, schemaAndTable, true);
         }
 
+        private void _CreateSubsetSourceTableInfo(IEnumerable<DataRow> dt, SourceTableInfo info, DataColumnCollection header)
+        {
+            dt.ExportToSqlTable(header, info.ConnectionString, $"{info.SchemaName}.{info.TableName}_Subeset", AppendIfTableExists: false);
+        }
+
         private void _SubsetRelatedFiles(DataTable baseFileSubset, List<KeyRelationship> relations, List<DataSourceInformation> dfInfos, bool Recurse, string baseFileName)
         {
             foreach (var rel in relations)
@@ -170,6 +171,10 @@ namespace RelationalSubsettingLib.Subsetting
                                                            where validList.
                                                                Any(x => x.Equals((string)otherData[RelatedFileColumnName]))
                                                            select otherData;
+                if (otherFileDataSourceInformation.MaskingInformation.Any())
+                {
+                    ApplyMask(otherFileDataSourceInformation.MaskingInformation, ValidRowsFromSource);
+                }
                 _CreateSubset(ValidRowsFromSource, otherFileDataSourceInformation, RelatedDataTable.Columns);
                 Console.Out.WriteLine($"{otherfileFileName}: subset created");
                 if (Recurse)
@@ -211,6 +216,7 @@ namespace RelationalSubsettingLib.Subsetting
                                                  where validList.
                                                      Any(x => x.Equals((string)otherData[RelatedFileColumnName]))
                                                  select otherData;
+                ApplyMask(otherFileDataSourceInformation.MaskingInformation, rowsIWant);
                 _CreateSubset(rowsIWant, otherFileDataSourceInformation, RelatedDataTable.Columns);
                 Console.Out.WriteLine($"{otherfileFileName}: subset created");
                 if (Recurse)
@@ -227,12 +233,29 @@ namespace RelationalSubsettingLib.Subsetting
             }
         }
 
-        private void ApplyMask(Dictionary<string, MaskingOptions> maskingInformation, DataTable baseFileSubset)
+        private async void ApplyMask(Dictionary<string, Tuple<MaskingOptions, string>> maskingInformation, DataTable dataTable)
         {
             foreach (var item in maskingInformation)
             {
                 string colName = item.Key;
-                MaskingOptions option = item.Value;
+                MaskingOptions option = item.Value.Item1;
+                string method = item.Value.Item2;
+                var strategy = MaskingStrategyFactory.CreateStrategyFromMaskingOption(option, method);
+                DataMasker masker = new DataMasker(strategy);
+                await masker.MaskDatatableAsync(dataTable, colName);
+            }
+        }
+
+        private async void ApplyMask(Dictionary<string, Tuple<MaskingOptions, string>> maskingInformation, IEnumerable<DataRow> dataRows)
+        {
+            foreach (var item in maskingInformation)
+            {
+                string colName = item.Key;
+                MaskingOptions option = item.Value.Item1;
+                string method = item.Value.Item2;
+                var strategy = MaskingStrategyFactory.CreateStrategyFromMaskingOption(option, method);
+                DataMasker masker = new DataMasker(strategy);
+                await masker.MaskDataRowEnumerableAsync(dataRows, colName);
             }
         }
 

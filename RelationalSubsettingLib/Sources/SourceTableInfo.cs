@@ -10,28 +10,27 @@ namespace RelationalSubsettingLib.Sources
 {
     public class SourceTableInfo : DataSourceInformation
     {
-        public string ConnectionString;
-        public string ServerName;
-        public string DatabaseName;
-        public string SchemaName;
-        public string TableName;
+        #region Public Properties
+
         public override string[] Columns { get; set; }
-
         public override string ConcreteType => "SourceTableInfo";
-
+        public override string FullyQualifiedName => FQDN();
+        public override Dictionary<string, Tuple<MaskingOptions, string>> MaskingInformation { get; }
         public override string SourceName => $"{SchemaName}.{TableName}";
 
-        public override string FullyQualifiedName => FQDN();
+        #endregion Public Properties
 
-        public override Dictionary<string, MaskingOptions> MaskingInformation { get; }
+        #region Public Fields
 
-        public override void LoadToDataTable(DataTable table)
-        {
-            using (SqlDataAdapter adapter = new SqlDataAdapter($"Select * from {SourceName}", ConnectionString))
-            {
-                adapter.Fill(table);
-            }
-        }
+        public string ConnectionString;
+        public string DatabaseName;
+        public string SchemaName;
+        public string ServerName;
+        public string TableName;
+
+        #endregion Public Fields
+
+        #region Public Constructors
 
         public SourceTableInfo(string connectionString, string schema, string table)
         {
@@ -58,8 +57,24 @@ namespace RelationalSubsettingLib.Sources
             SchemaName = schema;
             TableName = table;
             ConnectionString = connectionString;
-            MaskingInformation = new Dictionary<string, MaskingOptions>();
+            MaskingInformation = new Dictionary<string, Tuple<MaskingOptions, string>>();
         }
+
+        #endregion Public Constructors
+
+        #region Public Methods
+
+        public override void LoadToDataTable(DataTable table)
+        {
+            using (SqlDataAdapter adapter = new SqlDataAdapter($"Select * from {SourceName}", ConnectionString))
+            {
+                adapter.Fill(table);
+            }
+        }
+
+        #endregion Public Methods
+
+        #region Private Methods
 
         private void ExtractServerAndDatabaseFromConnectionString(string connectionString)
         {
@@ -96,6 +111,6 @@ namespace RelationalSubsettingLib.Sources
             return json;
         }
 
-
+        #endregion Private Methods
     }
 }
