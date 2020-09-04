@@ -33,6 +33,7 @@ namespace RelationalSubsettingLib
                 ,{"SUBSET", paramSUBSET}
                 ,{"FILE", paramFILE}
                 ,{"CONNECTION", paramCONNECTION}
+                ,{"MASK", paramMask}
             };
         }
 
@@ -208,8 +209,17 @@ namespace RelationalSubsettingLib
             rdsFile.Run(obj);
         }
 
+        [RequiresInitializedRepository(),
+            ValidOptions(CommandOptions.Add),
+            ValidOptions(CommandOptions.Remove)]
+        private void paramMask(string[] obj)
+        {
+            Mask m = new Mask();
+            m.Run(obj);
+        }
+
         [RequiresInitializedRepository()
-                    , ValidOptions(CommandOptions.Create)
+            , ValidOptions(CommandOptions.Create)
             , ValidOptions(CommandOptions.Factor)
             , ValidOptions(CommandOptions.SetBase)
             , ValidOptions(CommandOptions.Help)]
