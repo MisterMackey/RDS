@@ -27,7 +27,7 @@ namespace RelationalSubsettingLib.Functions
         {
             m_ModeMapping = new Dictionary<string, Action<string[]>>()
             {
-                {"-APPLY", modeApply}
+                {"-ADD", modeApply}
                 ,{"-REMOVE", modeRemove }
             };
         }
@@ -60,7 +60,7 @@ namespace RelationalSubsettingLib.Functions
             //optional option: a method to use with the masking strategy, check the actual maskingstrategies to see how the method is used (for replace the 'method' is simply the string value to use in the replacement action
             if (!obj.Length.Between(3, 4))
             {
-                Console.Error.WriteLine("Argument error, correct usage: rds mask -apply {sourcename} {masktype} [method]");
+                Console.Error.WriteLine("Argument error, correct usage: rds mask -ADD {sourcename} {masktype} [method]");
             }
             string filename = obj[0];
             string colName = obj[1];
