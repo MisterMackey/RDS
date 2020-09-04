@@ -145,47 +145,49 @@ namespace RelationalSubsettingLib.Subsetting
 
         private void _SubsetRelatedFiles(DataTable baseFileSubset, List<KeyRelationship> relations, List<DataSourceInformation> dfInfos, bool Recurse, string baseFileName)
         {
-            foreach (var rel in relations)
-            {
-                //set basefile column name (used in the 'exists' clause) to the column that is from the basefile, whether its primary of foreign
-                bool IsPrimaryColumnInBaseFile = rel.Primary.FileName.Equals(baseFileName);
-                string PrimaryFileColumnName = IsPrimaryColumnInBaseFile ? rel.Primary.Column : rel.Foreign.Column;
-                //same but reverse
-                string RelatedFileColumnName = IsPrimaryColumnInBaseFile ? rel.Foreign.Column : rel.Primary.Column;
-                //DataSourceInformation for related file
-                string otherfileFileName = IsPrimaryColumnInBaseFile ? rel.Foreign.FileName : rel.Primary.FileName;
-                var otherFileDataSourceInformation = dfInfos.
-                    Where(x => x.SourceName.Equals(otherfileFileName)).FirstOrDefault();
-                DataTable RelatedDataTable = new DataTable(otherfileFileName);
-                Console.Out.WriteLine($"Loading {otherfileFileName}");
-                LoadFileToDataTable(RelatedDataTable, otherFileDataSourceInformation);
-                //select where exists, linq optimizer do ur magic :S
-                //actually lets optimize this so we definitely don't enumerate the inner query hundreds of times
-                List<string> validList = (from baseData in baseFileSubset.AsEnumerable()
-                                          select (string)baseData[PrimaryFileColumnName]
-                                ).ToList();
-                IEnumerable<DataRow> ValidRowsFromSource = from otherData in RelatedDataTable.AsEnumerable()
-                                                           where validList.
-                                                               Any(x => x.Equals((string)otherData[RelatedFileColumnName]))
-                                                           select otherData;
-                if (otherFileDataSourceInformation.MaskingInformation.Any())
+            //foreach (var rel in relations)
+            Parallel.ForEach(
+                source: relations
+                , parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = 2 }
+                , body: (rel) =>
                 {
-                    ApplyMask(otherFileDataSourceInformation.MaskingInformation, ValidRowsFromSource).Wait();
+                    //set basefile column name (used in the 'exists' clause) to the column that is from the basefile, whether its primary of foreign
+                    bool IsPrimaryColumnInBaseFile = rel.Primary.FileName.Equals(baseFileName);
+                    string PrimaryFileColumnName = IsPrimaryColumnInBaseFile ? rel.Primary.Column : rel.Foreign.Column;
+                    //same but reverse
+                    string RelatedFileColumnName = IsPrimaryColumnInBaseFile ? rel.Foreign.Column : rel.Primary.Column;
+                    //DataSourceInformation for related file
+                    string otherfileFileName = IsPrimaryColumnInBaseFile ? rel.Foreign.FileName : rel.Primary.FileName;
+                    var otherFileDataSourceInformation = dfInfos.
+                        Where(x => x.SourceName.Equals(otherfileFileName)).FirstOrDefault();
+                    DataTable RelatedDataTable = new DataTable(otherfileFileName);
+                    Console.Out.WriteLine($"Loading {otherfileFileName}");
+                    LoadFileToDataTable(RelatedDataTable, otherFileDataSourceInformation);
+                    Console.Out.WriteLine($"Loaded {otherfileFileName} to memory, performing join.");
+                    IEnumerable<DataRow> ValidRowsFromSource = from otherData in RelatedDataTable.AsEnumerable()
+                                                               join primaryData in baseFileSubset.AsEnumerable()
+                                                               on otherData[RelatedFileColumnName] equals primaryData[PrimaryFileColumnName]
+                                                               select otherData;
+                    Console.Out.WriteLine("Join performed, now masking/writing.");
+                    if (otherFileDataSourceInformation.MaskingInformation.Any())
+                    {
+                        ApplyMask(otherFileDataSourceInformation.MaskingInformation, ValidRowsFromSource).Wait();
+                    }
+                    _CreateSubset(ValidRowsFromSource, otherFileDataSourceInformation, RelatedDataTable.Columns);
+                    Console.Out.WriteLine($"{otherfileFileName}: subset created");
+                    if (Recurse)
+                    {
+                        //repeat this stuff for the relations of this file we just made
+                        List<KeyRelationship> recursiveRelations = RetrieveKeyRelationships();
+                        //excluding relations that point back to the file we just came from in the previous recursion step
+                        var related = recursiveRelations.
+                             Where(x => (x.Primary.FileName.Equals(otherfileFileName) && !x.Foreign.FileName.Equals(baseFileName))
+                             || (x.Foreign.FileName.Equals(otherfileFileName) && !x.Primary.FileName.Equals(baseFileName))).
+                             ToList();
+                        _SubsetRelatedFiles(ValidRowsFromSource, related, dfInfos, true, otherfileFileName);
+                    }
                 }
-                _CreateSubset(ValidRowsFromSource, otherFileDataSourceInformation, RelatedDataTable.Columns);
-                Console.Out.WriteLine($"{otherfileFileName}: subset created");
-                if (Recurse)
-                {
-                    //repeat this stuff for the relations of this file we just made
-                    List<KeyRelationship> recursiveRelations = RetrieveKeyRelationships();
-                    //excluding relations that point back to the file we just came from in the previous recursion step
-                    var related = recursiveRelations.
-                        Where(x => (x.Primary.FileName.Equals(otherfileFileName) && !x.Foreign.FileName.Equals(baseFileName))
-                        || (x.Foreign.FileName.Equals(otherfileFileName) && !x.Primary.FileName.Equals(baseFileName))).
-                        ToList();
-                    _SubsetRelatedFiles(ValidRowsFromSource, related, dfInfos, true, otherfileFileName);
-                }
-            }
+            );
         }
 
         private void _SubsetRelatedFiles(IEnumerable<DataRow> baseFileSubset, List<KeyRelationship> relations, List<DataSourceInformation> dfInfos, bool Recurse, string baseFileName)
@@ -204,16 +206,16 @@ namespace RelationalSubsettingLib.Subsetting
                 DataTable RelatedDataTable = new DataTable(otherfileFileName);
                 Console.Out.WriteLine($"Loading {otherfileFileName}");
                 LoadFileToDataTable(RelatedDataTable, otherFileDataSourceInformation);
-                //select where exists, linq optimizer do ur magic :S
-                //actually lets optimize this so we definitely don't enumerate the inner query hundreds of times
-                List<string> validList = (from baseData in baseFileSubset
-                                          select (string)baseData[PrimaryFileColumnName]
-                                ).ToList();
+                Console.Out.WriteLine($"Loaded {otherfileFileName} to memory, performing join.");
                 IEnumerable<DataRow> rowsIWant = from otherData in RelatedDataTable.AsEnumerable()
-                                                 where validList.
-                                                     Any(x => x.Equals((string)otherData[RelatedFileColumnName]))
+                                                 join primaryData in baseFileSubset.AsEnumerable()
+                                                 on otherData[RelatedFileColumnName] equals primaryData[PrimaryFileColumnName]
                                                  select otherData;
-                ApplyMask(otherFileDataSourceInformation.MaskingInformation, rowsIWant).Wait();
+                Console.Out.WriteLine("Join performed, now masking/writing.");
+                if (otherFileDataSourceInformation.MaskingInformation.Any())
+                {
+                    ApplyMask(otherFileDataSourceInformation.MaskingInformation, rowsIWant).Wait();
+                }
                 _CreateSubset(rowsIWant, otherFileDataSourceInformation, RelatedDataTable.Columns);
                 Console.Out.WriteLine($"{otherfileFileName}: subset created");
                 if (Recurse)
