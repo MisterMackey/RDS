@@ -42,6 +42,8 @@
         /// </summary>
         public static string SqlDecimalPrecision { get => _SqlDecimalPrecision; }
 
+        public static string SqlTableSubsetPostfix { get => _SqlTableSubsetPostfix; }
+
         #endregion Public Properties
 
         #region Private Fields
@@ -54,6 +56,7 @@
         private static string _RdsDirectoryName = ".rds";
         private static string _RdsSubsettingSettingsFileName = "subsetsettings.rdssf";
         private static string _SqlDecimalPrecision = "DECIMAL(38,10)";
+        private static string _SqlTableSubsetPostfix = "_subset";
 
         #endregion Private Fields
     }

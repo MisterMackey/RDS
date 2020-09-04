@@ -57,6 +57,7 @@ namespace RelationalSubsettingLib.Masking
             {
                 ReplaceValue = Settings.DefaultReplacementValueForReplaceStrategy;
             }
+            table.Columns[columnName].ReadOnly = false;
         }
 
         #endregion Public Methods

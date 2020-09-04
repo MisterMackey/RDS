@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using RelationalSubsettingLib.Masking;
+using RelationalSubsettingLib.Properties;
 using RelationalSubsettingLib.Sources;
 using System;
 using System.Collections.Generic;
@@ -133,13 +134,13 @@ namespace RelationalSubsettingLib.Subsetting
 
         private void _CreateSubsetSourceTableInfo(DataTable dt, SourceTableInfo info)
         {
-            string schemaAndTable = $"{info.SchemaName}.{info.TableName}_Subset";
+            string schemaAndTable = $"{info.SchemaName}.{info.TableName}{Settings.SqlTableSubsetPostfix}";
             dt.ExportToSqlTable(info.ConnectionString, schemaAndTable, true);
         }
 
         private void _CreateSubsetSourceTableInfo(IEnumerable<DataRow> dt, SourceTableInfo info, DataColumnCollection header)
         {
-            dt.ExportToSqlTable(header, info.ConnectionString, $"{info.SchemaName}.{info.TableName}_Subeset", AppendIfTableExists: false);
+            dt.ExportToSqlTable(header, info.ConnectionString, $"{info.SchemaName}.{info.TableName}{Settings.SqlTableSubsetPostfix}", AppendIfTableExists: false);
         }
 
         private void _SubsetRelatedFiles(DataTable baseFileSubset, List<KeyRelationship> relations, List<DataSourceInformation> dfInfos, bool Recurse, string baseFileName)
@@ -169,7 +170,7 @@ namespace RelationalSubsettingLib.Subsetting
                                                            select otherData;
                 if (otherFileDataSourceInformation.MaskingInformation.Any())
                 {
-                    ApplyMask(otherFileDataSourceInformation.MaskingInformation, ValidRowsFromSource);
+                    ApplyMask(otherFileDataSourceInformation.MaskingInformation, ValidRowsFromSource).Wait();
                 }
                 _CreateSubset(ValidRowsFromSource, otherFileDataSourceInformation, RelatedDataTable.Columns);
                 Console.Out.WriteLine($"{otherfileFileName}: subset created");
@@ -212,7 +213,7 @@ namespace RelationalSubsettingLib.Subsetting
                                                  where validList.
                                                      Any(x => x.Equals((string)otherData[RelatedFileColumnName]))
                                                  select otherData;
-                ApplyMask(otherFileDataSourceInformation.MaskingInformation, rowsIWant);
+                ApplyMask(otherFileDataSourceInformation.MaskingInformation, rowsIWant).Wait();
                 _CreateSubset(rowsIWant, otherFileDataSourceInformation, RelatedDataTable.Columns);
                 Console.Out.WriteLine($"{otherfileFileName}: subset created");
                 if (Recurse)
@@ -229,7 +230,7 @@ namespace RelationalSubsettingLib.Subsetting
             }
         }
 
-        private async void ApplyMask(Dictionary<string, Tuple<MaskingOptions, string>> maskingInformation, DataTable dataTable)
+        private async Task ApplyMask(Dictionary<string, Tuple<MaskingOptions, string>> maskingInformation, DataTable dataTable)
         {
             foreach (var item in maskingInformation)
             {
@@ -238,11 +239,12 @@ namespace RelationalSubsettingLib.Subsetting
                 string method = item.Value.Item2;
                 var strategy = MaskingStrategyFactory.CreateStrategyFromMaskingOption(option, method);
                 DataMasker masker = new DataMasker(strategy);
+                Console.Out.WriteLine($"Applying datamask of type {option} to column {colName}");
                 await masker.MaskDatatableAsync(dataTable, colName);
             }
         }
 
-        private async void ApplyMask(Dictionary<string, Tuple<MaskingOptions, string>> maskingInformation, IEnumerable<DataRow> dataRows)
+        private async Task ApplyMask(Dictionary<string, Tuple<MaskingOptions, string>> maskingInformation, IEnumerable<DataRow> dataRows)
         {
             foreach (var item in maskingInformation)
             {
@@ -251,6 +253,7 @@ namespace RelationalSubsettingLib.Subsetting
                 string method = item.Value.Item2;
                 var strategy = MaskingStrategyFactory.CreateStrategyFromMaskingOption(option, method);
                 DataMasker masker = new DataMasker(strategy);
+                Console.Out.WriteLine($"Applying datamask of type {option} to column {colName}");
                 await masker.MaskDataRowEnumerableAsync(dataRows, colName);
             }
         }
@@ -305,7 +308,7 @@ namespace RelationalSubsettingLib.Subsetting
 
             if (inf.MaskingInformation.Any())
             {
-                ApplyMask(inf.MaskingInformation, BaseFileSubset);
+                ApplyMask(inf.MaskingInformation, BaseFileSubset).Wait();
             }
 
             //clean some stuff up i guess

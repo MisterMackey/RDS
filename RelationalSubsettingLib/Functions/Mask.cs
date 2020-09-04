@@ -62,7 +62,7 @@ namespace RelationalSubsettingLib.Functions
             {
                 Console.Error.WriteLine("Argument error, correct usage: rds mask -ADD {sourcename} {masktype} [method]");
             }
-            string filename = obj[0];
+            string filename = obj[0] + Settings.DataSourceFileExtension;
             string colName = obj[1];
             string type = obj[2];
             string method = obj.ElementAtOrDefault(3); //null values will be passed on, this is intended
@@ -90,7 +90,7 @@ namespace RelationalSubsettingLib.Functions
                 Console.Error.WriteLine("Argument error, correct usage: rds mask -remove {sourcename} {columnname}");
                 return;
             }
-            string filename = obj[0];
+            string filename = obj[0] + Settings.DataSourceFileExtension;
             string colName = obj[1];
             var dirinf = new DirectoryInfo($"{Directory.GetCurrentDirectory()}\\{Settings.RdsDirectoryName}");
             var sourceInf = dirinf.EnumerateFiles().Where(
