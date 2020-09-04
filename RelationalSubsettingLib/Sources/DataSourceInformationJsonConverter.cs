@@ -16,7 +16,12 @@ namespace RelationalSubsettingLib
 
         #region Private Fields
 
-        private static JsonSerializerSettings CustomSerializerSettings = new JsonSerializerSettings() { ContractResolver = new DataSourceInformationJsonConverterContractResolver() };
+        private static JsonSerializerSettings CustomSerializerSettings = new JsonSerializerSettings()
+        {
+            ContractResolver = new DataSourceInformationJsonConverterContractResolver()
+            ,
+            NullValueHandling = NullValueHandling.Include
+        };
 
         #endregion Private Fields
 

@@ -19,6 +19,29 @@ namespace RelationalSubsettingLib
         #region Public Methods
 
         /// <summary>
+        /// Returns true if the number is between the low and high numbers.
+        /// </summary>
+        /// <param name="number">
+        /// </param>
+        /// <param name="low">
+        /// </param>
+        /// <param name="high">
+        /// </param>
+        /// <returns>
+        /// </returns>
+        public static bool Between(this int number, int low, int high, bool inclusive = true)
+        {
+            if (inclusive)
+            {
+                return (low <= number && number <= high);
+            }
+            else
+            {
+                return (low < number && number < high);
+            }
+        }
+
+        /// <summary>
         /// splits a string, auto-detects delimiters. doesn't use qualifier
         /// </summary>
         /// <param name="str">
