@@ -13,7 +13,6 @@ namespace RelationalSubsettingLib.Masking.Tests
         public void DataMaskerConstructorTest()
         {
             DataMasker dm = new DataMasker(new MockStrategy());
-            dm = new DataMasker(new MockStrategy(), new System.Threading.Tasks.ParallelOptions());
         }
 
         [TestMethod()]

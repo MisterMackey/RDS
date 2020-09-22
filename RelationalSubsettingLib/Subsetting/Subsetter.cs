@@ -234,30 +234,42 @@ namespace RelationalSubsettingLib.Subsetting
 
         private async Task ApplyMask(Dictionary<string, Tuple<MaskingOptions, string>> maskingInformation, DataTable dataTable)
         {
+            Console.Out.WriteLine("Combining multiple strategies into one...");
+            List<IMaskingStrategy> strats = new List<IMaskingStrategy>();
             foreach (var item in maskingInformation)
             {
                 string colName = item.Key;
                 MaskingOptions option = item.Value.Item1;
                 string method = item.Value.Item2;
                 var strategy = MaskingStrategyFactory.CreateStrategyFromMaskingOption(option, method);
-                DataMasker masker = new DataMasker(strategy);
+                strategy.Initialize(dataTable, colName); //'must call this here for aggregatre strategies
                 Console.Out.WriteLine($"Applying datamask of type {option} to column {colName}");
-                await masker.MaskDatatableAsync(dataTable, colName);
+                strats.Add(strategy);
             }
+            IMaskingStrategy CombinedStrategy = MaskingStrategyFactory.CombineStrategiesIntoSingleStrategy(strats);
+            DataMasker masker = new DataMasker(CombinedStrategy);
+            await masker.MaskDatatableAsync(dataTable, "AllCols");
+            Console.Out.WriteLine("Strategies executed.");
         }
 
         private async Task ApplyMask(Dictionary<string, Tuple<MaskingOptions, string>> maskingInformation, IEnumerable<DataRow> dataRows)
         {
+            Console.Out.WriteLine("Combining multiple strategies into one...");
+            List<IMaskingStrategy> strats = new List<IMaskingStrategy>();
             foreach (var item in maskingInformation)
             {
                 string colName = item.Key;
                 MaskingOptions option = item.Value.Item1;
                 string method = item.Value.Item2;
                 var strategy = MaskingStrategyFactory.CreateStrategyFromMaskingOption(option, method);
-                DataMasker masker = new DataMasker(strategy);
+                strategy.Initialize(dataRows.First().Table, colName); //'must call this here for aggregatre strategies
                 Console.Out.WriteLine($"Applying datamask of type {option} to column {colName}");
-                await masker.MaskDataRowEnumerableAsync(dataRows, colName);
+                strats.Add(strategy);
             }
+            IMaskingStrategy CombinedStrategy = MaskingStrategyFactory.CombineStrategiesIntoSingleStrategy(strats);
+            DataMasker masker = new DataMasker(CombinedStrategy);
+            await masker.MaskDataRowEnumerableAsync(dataRows, "allcols");
+            Console.Out.WriteLine("Strategies executed.");
         }
 
         private List<KeyRelationship> RetrieveKeyRelationships()

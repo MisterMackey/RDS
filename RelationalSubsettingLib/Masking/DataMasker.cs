@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace RelationalSubsettingLib.Masking
@@ -10,7 +11,6 @@ namespace RelationalSubsettingLib.Masking
     {
         #region Private Fields
 
-        private ParallelOptions m_Options;
         private IMaskingStrategy m_Strategy;
 
         #endregion Private Fields
@@ -19,15 +19,7 @@ namespace RelationalSubsettingLib.Masking
 
         public DataMasker(IMaskingStrategy strategy)
         {
-            m_Options = new ParallelOptions();
-            m_Options.MaxDegreeOfParallelism = Environment.ProcessorCount / 2;
             m_Strategy = strategy;
-        }
-
-        public DataMasker(IMaskingStrategy strategy, ParallelOptions options)
-        {
-            m_Strategy = strategy;
-            m_Options = options;
         }
 
         #endregion Public Constructors
@@ -53,23 +45,19 @@ namespace RelationalSubsettingLib.Masking
         private void DoMasking(IMaskingStrategy strategy, DataTable table, string columnName)
         {
             strategy.Initialize(table, columnName);
-
-            Parallel.ForEach(
-                source: table.AsEnumerable(),
-                parallelOptions: m_Options,
-                body: strategy.ParallelMaskingAction
-            );
+            foreach (var row in table.AsEnumerable())
+            {
+                strategy.ParallelMaskingAction(row);
+            }
         }
 
         private void DoMasking(IMaskingStrategy strategy, IEnumerable<DataRow> source, string columnName)
         {
             strategy.Initialize(source.First().Table, columnName);
-
-            Parallel.ForEach(
-                source: source,
-                parallelOptions: m_Options,
-                body: strategy.ParallelMaskingAction
-            );
+            foreach (var row in source)
+            {
+                strategy.ParallelMaskingAction(row);
+            }
         }
 
         #endregion Private Methods

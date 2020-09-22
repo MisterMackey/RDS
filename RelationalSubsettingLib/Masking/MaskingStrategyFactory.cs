@@ -18,6 +18,13 @@ namespace RelationalSubsettingLib.Masking
 
         #region Public Methods
 
+        public static IMaskingStrategy CombineStrategiesIntoSingleStrategy(IEnumerable<IMaskingStrategy> strategies)
+        {
+            AggregateMaskingStrategy ret = new AggregateMaskingStrategy();
+            ret.AddStrategyRange(strategies);
+            return ret;
+        }
+
         public static IMaskingStrategy CreateStrategyFromMaskingOption(MaskingOptions option, string maskingMethod = null)
         {
             IMaskingStrategy ret = m_OptionToStrategyFactoryMethods[option](maskingMethod);
