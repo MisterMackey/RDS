@@ -63,7 +63,7 @@ namespace RelationalSubsettingLib.Subsetting
         private static DataTable SelectRandomValues(DataTable uniques, int AmountToSelect)
         {
             object[] selected;
-            object[] all = new string[uniques.Rows.Count];
+            object[] all = new object[uniques.Rows.Count];
             for (int i = 0; i < uniques.Rows.Count; i++)
             {
                 all[i] = uniques.Rows[i][0];
@@ -164,10 +164,10 @@ namespace RelationalSubsettingLib.Subsetting
                     Console.Out.WriteLine($"Loading {otherfileFileName}");
                     LoadFileToDataTable(RelatedDataTable, otherFileDataSourceInformation);
                     Console.Out.WriteLine($"Loaded {otherfileFileName} to memory, performing join.");
-                    IEnumerable<DataRow> ValidRowsFromSource = from otherData in RelatedDataTable.AsEnumerable()
-                                                               join primaryData in baseFileSubset.AsEnumerable()
-                                                               on otherData[RelatedFileColumnName] equals primaryData[PrimaryFileColumnName]
-                                                               select otherData;
+                    IEnumerable<DataRow> ValidRowsFromSource = (from otherData in RelatedDataTable.AsEnumerable()
+                                                                join primaryData in baseFileSubset.AsEnumerable()
+                                                                on otherData[RelatedFileColumnName] equals primaryData[PrimaryFileColumnName]
+                                                                select otherData).Distinct();
                     Console.Out.WriteLine("Join performed, now masking/writing.");
                     if (otherFileDataSourceInformation.MaskingInformation.Any())
                     {

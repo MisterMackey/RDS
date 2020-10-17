@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace RelationalSubsettingLib.Functions
 {
@@ -8,7 +11,12 @@ namespace RelationalSubsettingLib.Functions
 
         public void Run()
         {
-            Console.Out.WriteLine("I am helping");
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("RDS version information:");
+            var assembly = typeof(Help).Assembly;
+            sb.AppendLine(assembly.FullName);
+            sb.AppendLine($"Running from {assembly.Location}");
+            Console.Out.WriteLine(sb.ToString());
         }
 
         #endregion Public Methods

@@ -19,7 +19,8 @@ namespace RelationalSubsettingLib.Sql
             {typeof(DateTime), "DATETIME" },
             {typeof(Decimal), Settings.SqlDecimalPrecision },
             {typeof(Double), "DOUBLE" },
-            {typeof(Guid), "GUID" },
+            {typeof(Guid), "UniqueIdentifier" },
+            {typeof(Int16), "smallint" },
             {typeof(Int32), "INT" },
             {typeof(Int64), "BIGINT" },
             {typeof(String), $"VARCHAR({Settings.PrefferedSqlStringLength.ToString()})" }
