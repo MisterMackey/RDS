@@ -62,11 +62,11 @@ namespace RelationalSubsettingLib.Subsetting
 
         private static DataTable SelectRandomValues(DataTable uniques, int AmountToSelect)
         {
-            string[] selected;
-            string[] all = new string[uniques.Rows.Count];
+            object[] selected;
+            object[] all = new string[uniques.Rows.Count];
             for (int i = 0; i < uniques.Rows.Count; i++)
             {
-                all[i] = uniques.Rows[i][0].ToString();
+                all[i] = uniques.Rows[i][0];
             }
             Random rng = new Random();
             var shuffled = all.Shuffle(rng);
@@ -283,7 +283,7 @@ namespace RelationalSubsettingLib.Subsetting
             DataTable uniques = new DataTable("uniques");
             var uniquerows = (from rows in baseFileTable.AsEnumerable()
                               select rows[col]).Distinct();
-            uniques.Columns.Add(col);
+            uniques.Columns.Add(col, baseFileTable.Columns[col].DataType);
             foreach (var r in uniquerows)
             {
                 uniques.Rows.Add(r);

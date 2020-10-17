@@ -119,8 +119,8 @@ namespace RelationalSubsettingLib.Functions
             DirectoryInfo rdsdir = new DirectoryInfo($"{Environment.CurrentDirectory}\\{rdsDir}");
             var datafileinfo = rdsdir.EnumerateFiles(). //all files
                 Where(x => x.Extension.Equals(ext)). //with rds datafileinfo extension
-                Select(x => new DataFileInfo().LoadFromFile(x.FullName)). //select the datafileinfo objects that are loaded from those files
-                Where(x => x.Info.Name.Equals(file)). //where the original name equals the supplied name
+                Select(x => DataSourceInformation.LoadFromFile(x.FullName)). //select the datafileinfo objects that are loaded from those files
+                Where(x => x.SourceName.Equals(file)). //where the source name equals the supplied name
                 FirstOrDefault(); //first one or null
 
             if (datafileinfo == null)
@@ -147,16 +147,16 @@ namespace RelationalSubsettingLib.Functions
                 Console.Error.WriteLine("Incorrect amount of arguments specified. see help for usage");
                 return;
             }
-            string file = obj[2];
+            string FileOrTable = obj[2];
             string column = obj[3];
-            if (!IsValidInputForSetbase(file, column))
+            if (!IsValidInputForSetbase(FileOrTable, column))
             {
                 return;
             }
             options.BaseColumn = column;
-            options.BaseFileName = file;
+            options.BaseFileName = FileOrTable;
             options.SaveToFile(settingsFile.FullName);
-            Console.Out.WriteLine($"Base set to column {column} in {file}");
+            Console.Out.WriteLine($"Base set to column {column} in {FileOrTable}");
             return;
         }
 
