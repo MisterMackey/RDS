@@ -9,7 +9,7 @@
     <PackageReference Include="CsvHelper" Version="15.0.5" />
     <PackageReference Include="D2S" Version="3.1.2" />
     <PackageReference Include="log4net" Version="2.0.11" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
